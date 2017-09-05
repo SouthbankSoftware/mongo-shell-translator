@@ -1,0 +1,16 @@
+{
+  "name": "mongo-shell-translator",
+  "version": "1.0.0",
+  "description": "Translate mongo shell command to native driver",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Zhao Yi (zhaoyi0113@gmail.com)",
+  "license": "ISC",
+  "dependencies": {
+    "escodegen": "^1.8.1",
+    "esprima": "^4.0.0",
+    "estraverse": "^4.2.0"
+  }
+}
