@@ -13,7 +13,7 @@ export default class Panel extends React.Component {
   constructor (props) {
     super(props);
     this.state = {
-      shell: 'db.test.find({"name":"joey"}, {_id: 0})',
+      shell: 'db.test.find({"name":"joey"}, {_id: 0}) \n db.test.find()',
       translate: '',
     };
   }

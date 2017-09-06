@@ -21,6 +21,7 @@
     "global-require": "off",
     "semi": "warn",
     "no-param-reassign": "off",
+    "class-methods-use-this": "off",
     "arrow-body-style": "off",
     "import/extensions": "off"
   }

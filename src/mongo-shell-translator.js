@@ -1,3 +1,6 @@
+import { createFindStatement, findDbName } from './find-translator';
+import generate from './code-generator';
+
 const esprima = require('esprima');
 const estraverse = require('estraverse');
 const escodegen = require('escodegen');
@@ -5,7 +8,6 @@ const escodegen = require('escodegen');
 class MongoShellTranslator {
 
   translate(shell) {
-    console.log('esprima', esprima);
     const ast = esprima.parseScript(shell, {
       tolerant: true,
       raw: true,
@@ -17,13 +19,13 @@ class MongoShellTranslator {
       enter: (node, parent) => {
         if (node.type === esprima.Syntax.CallExpression) {
           const callee = node.callee;
-          if (node.callee.type === esprima.Syntax.MemberExpression &&
-            node.callee.property.name === 'find') {
+          if (callee.type === esprima.Syntax.MemberExpression &&
+            callee.property.name === 'find') {
             node.mongoShellType = 'find';
             let query;
             let fields;
             if (node.arguments.length > 0) {
-              node.arguments.map((argument, i) => {
+              node.arguments.forEach((argument, i) => {
                 if (i === 0) {
                   query = escodegen.generate(argument);
                 } else if (i === 1) {
@@ -32,18 +34,7 @@ class MongoShellTranslator {
               });
             }
             if (callee.object.type === esprima.Syntax.MemberExpression) {
-              const object = {};
-              object.type = esprima.Syntax.CallExpression;
-              object.arguments = [{ type: 'Literal', value: callee.object.property.name }];
-              object.callee = {};
-              object.callee.type = esprima.Syntax.MemberExpression;
-              object.callee.property = {};
-              object.callee.property.name = 'collection';
-              object.callee.property.type = esprima.Syntax.Identifier;
-              object.callee.object = {};
-              object.callee.object.name = 'db';
-              object.callee.object.type = esprima.Syntax.Identifier;
-              callee.object = object;
+              callee.object = createFindStatement(findDbName(node), callee.object.property.name);
             }
             if (parent.type === esprima.Syntax.VariableDeclarator ||
               parent.type === esprima.Syntax.ExpressionStatement) {
@@ -61,15 +52,9 @@ class MongoShellTranslator {
           }
         }
       },
-      leave: (node, parent) => {
-        if (node.type === esprima.Syntax.CallExpression) {
-          if (node.mongoShellType === 'find') {
-
-          }
-        }
-      },
+      leave: (node, parent) => {},
     });
-    return escodegen.generate(ast);
+    return generate(ast);
   }
 
 }
