@@ -1,7 +1,4 @@
-// const esprima = require('esprima')
-// let ast = esprima.parseScript('db.test.find({"name":"joey"})', { tolerant: true })
-// ast = esprima.tokenize('use test', { tolerant: true })
-// console.log(ast)
+
 
 import React from 'react';
 import ReactDOM from 'react-dom';

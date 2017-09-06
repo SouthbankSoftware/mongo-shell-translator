@@ -33,23 +33,24 @@ const config = {
   },
 
   module: {
-    rules: [{
-      enforce: 'pre',
-      test: /\.jsx?$/,
-      exclude: /node_modules/,
-      loader: 'eslint-loader',
-    },
-    {
-      test: /\.jsx?$/,
-      loaders: [
+    rules: [
+      //   {
+      //   enforce: 'pre',
+      //   test: /\.jsx?$/,
+      //   exclude: /node_modules/,
+      //   loader: 'eslint-loader',
+      // },
+      {
+        test: /\.jsx?$/,
+        loaders: [
           'babel-loader',
         ],
-      exclude: /node_modules/,
-    },
-    {
-      test: /\.scss$/,
-      exclude: /node_modules/,
-      use: ExtractTextPlugin.extract({
+        exclude: /node_modules/,
+      },
+      {
+        test: /\.scss$/,
+        exclude: /node_modules/,
+        use: ExtractTextPlugin.extract({
           fallback: 'style-loader',
           use: [
             'css-loader',
@@ -61,7 +62,7 @@ const config = {
             },
           ],
         }),
-    },
+      },
       { test: /\.(png|jpg)$/, use: 'url-loader?limit=15000' },
       { test: /\.eot(\?v=\d+.\d+.\d+)?$/, use: 'file-loader' },
       { test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/, use: 'url-loader?limit=10000&mimetype=application/font-woff' },
