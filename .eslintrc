@@ -20,6 +20,7 @@
     "linebreak-style": "off",
     "global-require": "off",
     "semi": "warn",
+    "no-param-reassign": "off",
     "arrow-body-style": "off",
     "import/extensions": "off"
   }
