@@ -1,12 +1,10 @@
 import React from 'react';
 
-// const esprima = require('esprima');
 import * as esprima from 'esprima';
 
 const estraverse = require('estraverse');
 const escodegen = require('escodegen');
 
-// let ast = esprima.parseScript('db.test.find({"name":"joey"})', { tolerant: true })
 // ast = esprima.tokenize('use test', { tolerant: true })
 // console.log(ast)
 export default class Panel extends React.Component {
