@@ -24,6 +24,7 @@
     "class-methods-use-this": "off",
     "arrow-body-style": "off",
     "import/extensions": "off",
-    "react/jsx-no-bind": "off"
+    "react/jsx-no-bind": "off",
+    "no-case-declarations": "off"
   }
 }

@@ -50,33 +50,25 @@ const findDbName = (node) => {
   return null;
 };
 
-const getCallbackStatement = (syntax) => {
-  console.log('xxx', syntax);
-  switch (syntax) {
-    case syntaxType.await:
-      return {};
-    case syntaxType.promise:
-      return {};
-    default:
-      return {
-        type: esprima.Syntax.FunctionExpression,
-        id: null,
-        body: {
-          type: esprima.Syntax.BlockStatement,
-          body: [],
-        },
-        params: [{
-          type: esprima.Syntax.Identifier,
-          name: 'err',
-        }, {
-          type: esprima.Syntax.Identifier,
-          name: 'docs',
-        }],
-        generator: false,
-        expression: false,
-        async: false,
-      };
-  }
+const getCallbackStatement = () => {
+  return {
+    type: esprima.Syntax.FunctionExpression,
+    id: null,
+    body: {
+      type: esprima.Syntax.BlockStatement,
+      body: [],
+    },
+    params: [{
+      type: esprima.Syntax.Identifier,
+      name: 'err',
+    }, {
+      type: esprima.Syntax.Identifier,
+      name: 'docs',
+    }],
+    generator: false,
+    expression: false,
+    async: false,
+  };
 };
 
 /**
@@ -97,13 +89,29 @@ const getToArrayStatement = (node, syntax) => {
           name: 'toArray',
         },
       },
-      arguments: [getCallbackStatement(syntax)],
+      arguments: syntax === syntaxType.callback ? [getCallbackStatement()] : [],
     };
   }
+  return null;
 };
 
-const addCallbackOnStatement = (node, syntax) => {
-  const statement = getToArrayStatement(node, syntax);
+const getThenPromise = () => {
+  return {
+    type: 'CallExpression',
+    callee: {
+      type: 'MemberExpression',
+      computed: false,
+      object: null,
+      property: {
+        type: 'Identifier',
+        name: 'then',
+      },
+    },
+    arguments: [],
+  };
+};
+
+const addStatementToNode = (node, statement) => {
   if (statement) {
     if (node.type === esprima.Syntax.VariableDeclarator) {
       statement.callee.object = node.init;
@@ -115,12 +123,52 @@ const addCallbackOnStatement = (node, syntax) => {
       statement.callee.object = node.expression;
       node.expression = statement;
     }
-  } else if (node.type === esprima.Syntax.VariableDeclarator) {
-    node.init.arguments = [getCallbackStatement(syntax)];
-  } else if (node.type === esprima.Syntax.AssignmentExpression) {
-    node.right.arguments = [getCallbackStatement(syntax)];
-  } else {
-    node.expression.arguments = [getCallbackStatement(syntax)];
+  }
+};
+
+/**
+ * add callback on the statement. It can be callback, promise or await/sync
+ * @param {*} node
+ * @param {*} syntax
+ */
+const addCallbackOnStatement = (node, syntax) => {
+  let statement;
+  switch (syntax) {
+    case syntaxType.await:
+      break;
+    case syntaxType.promise:
+      statement = getToArrayStatement(node, syntax);
+      addStatementToNode(node, statement);
+      statement = getThenPromise(node, syntax);
+      addStatementToNode(node, statement);
+      if (node.type === esprima.Syntax.VariableDeclarator) {
+        node.init.arguments = [getCallbackStatement(syntax)];
+      } else if (node.type === esprima.Syntax.AssignmentExpression) {
+        node.right.arguments = [getCallbackStatement(syntax)];
+      } else {
+        node.expression.arguments = [getCallbackStatement(syntax)];
+      }
+      break;
+    default:
+      statement = getToArrayStatement(node, syntax);
+      if (statement) {
+        if (node.type === esprima.Syntax.VariableDeclarator) {
+          statement.callee.object = node.init;
+          node.init = statement;
+        } else if (node.type === esprima.Syntax.AssignmentExpression) {
+          statement.callee.object = node.right;
+          node.right = statement;
+        } else {
+          statement.callee.object = node.expression;
+          node.expression = statement;
+        }
+      } else if (node.type === esprima.Syntax.VariableDeclarator) {
+        node.init.arguments = [getCallbackStatement(syntax)];
+      } else if (node.type === esprima.Syntax.AssignmentExpression) {
+        node.right.arguments = [getCallbackStatement(syntax)];
+      } else {
+        node.expression.arguments = [getCallbackStatement(syntax)];
+      }
   }
 };
 
