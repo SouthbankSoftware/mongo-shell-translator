@@ -97,4 +97,32 @@ const getToArrayStatement = (node, syntax) => {
   }
 };
 
-export default { createFindStatement, findDbName, getToArrayStatement, getCallbackStatement };
+const addCallbackOnStatement = (node, syntax) => {
+  const statement = getToArrayStatement(node, syntax);
+  if (statement) {
+    if (node.type === esprima.Syntax.VariableDeclarator) {
+      statement.callee.object = node.init;
+      node.init = statement;
+    } else if (node.type === esprima.Syntax.AssignmentExpression) {
+      statement.callee.object = node.right;
+      node.right = statement;
+    } else {
+      statement.callee.object = node.expression;
+      node.expression = statement;
+    }
+  } else if (node.type === esprima.Syntax.VariableDeclarator) {
+    node.init.arguments = [getCallbackStatement(options.syntaxType.callback, syntax)];
+  } else if (node.type === esprima.Syntax.AssignmentExpression) {
+    node.right.arguments = [getCallbackStatement(options.syntaxType.callback, syntax)];
+  } else {
+    node.expression.arguments = [getCallbackStatement(options.syntaxType.callback, syntax)];
+  }
+};
+
+export default {
+  createFindStatement,
+  findDbName,
+  getToArrayStatement,
+  getCallbackStatement,
+  addCallbackOnStatement,
+};

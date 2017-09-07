@@ -16,8 +16,9 @@ const parseOptions = {
 
 class MongoShellTranslator {
 
-  constructor() {
+  constructor(stype) {
     this.statementType = '';
+    this.sType = stype;
   }
 
   translate(shell) {
@@ -52,25 +53,7 @@ class MongoShellTranslator {
           node.type === esprima.Syntax.AssignmentExpression) {
           if (this.statementType === 'find') {
             this.statementType = '';
-            const statement = findTranslator.getToArrayStatement(node);
-            if (statement) {
-              if (node.type === esprima.Syntax.VariableDeclarator) {
-                statement.callee.object = node.init;
-                node.init = statement;
-              } else if (node.type === esprima.Syntax.AssignmentExpression) {
-                statement.callee.object = node.right;
-                node.right = statement;
-              } else {
-                statement.callee.object = node.expression;
-                node.expression = statement;
-              }
-            } else if (node.type === esprima.Syntax.VariableDeclarator) {
-              node.init.arguments = [findTranslator.getCallbackStatement(options.syntaxType.callback)];
-            } else if (node.type === esprima.Syntax.AssignmentExpression) {
-              node.right.arguments = [findTranslator.getCallbackStatement(options.syntaxType.callback)];
-            } else {
-              node.expression.arguments = [findTranslator.getCallbackStatement(options.syntaxType.callback)];
-            }
+            findTranslator.addCallbackOnStatement(node, this.stype);
           }
         }
       },
