@@ -1,14 +1,11 @@
 import React from 'react';
 
-import * as esprima from 'esprima';
+import CodeMirror from 'react-codemirror';
 
-const estraverse = require('estraverse');
-const escodegen = require('escodegen');
-
+import CM from 'codemirror';
 import { MongoShellTranslator } from '../../../src/index';
+import '../../node_modules/codemirror/lib/codemirror.css';
 
-// ast = esprima.tokenize('use test', { tolerant: true })
-// console.log(ast)
 export default class Panel extends React.Component {
   constructor (props) {
     super(props);
@@ -22,27 +19,42 @@ export default class Panel extends React.Component {
 
   translate () {
     const translator = new MongoShellTranslator();
-    this.setState({ translate: translator.translate(this.state.shell) });
+    const value = translator.translate(this.state.shell);
+    this.setState({ translate: value });
+    const cm = this.editor.getCodeMirror();
+    cm && cm.setValue(value);
   }
 
   render () {
+    const options = {
+      smartIndent: true,
+      readOnly: false,
+      lineWrapping: false,
+      tabSize: 2,
+      matchBrackets: true,
+      mode: 'javascript',
+      lineNumbers: true,
+    };
     return (
       <div>
-        <textarea
+        <CodeMirror
+          autoFocus
           value={this.state.shell}
-          onChange={e => this.setState({ shell: e.target.value })}
-          rows="20"
-          cols="50"
-          style={{ fontSize: 'x-large' }}
+          onChange={e => this.setState({ shell: e })}
+          options={options}
         />
-        <textarea
-          type="text"
-          rows="20"
-          cols="50"
-          style={{ fontSize: 'x-large' }}
+        <div style={{ height: '50px' }}>
+          <button onClick={this.translate.bind(this)}>Translate</button>
+        </div>
+        <CodeMirror
           value={this.state.translate}
+          onChange={() => console.log()}
+          options={options}
+          codeMirrorInstance={CM}
+          ref={(cm) => {
+            this.editor = cm;
+          }}
         />
-        <button onClick={this.translate.bind(this)}>Translate</button>
       </div>
     );
   }

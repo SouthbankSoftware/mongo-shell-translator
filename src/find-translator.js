@@ -82,9 +82,7 @@ const getCallbackStatement = (syntax) => {
  */
 const getToArrayStatement = (node, syntax) => {
   const statement = escodegen.generate(node);
-  console.log('xxxx', statement);
   if (!statement.trim().endsWith('toArray();') && !statement.trim().endsWith('toArray()')) {
-    console.log('add toarray');
     return {
       type: 'CallExpression',
       callee: {

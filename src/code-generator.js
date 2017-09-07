@@ -12,6 +12,7 @@ const options = {
     json: false,
     renumber: false,
     hexadecimal: false,
+    preserveBlankLines: true,
     quotes: 'single',
     escapeless: false,
     compact: false,
@@ -25,7 +26,7 @@ const options = {
     comprehensionExpressionStartsWithAssignment: false,
   },
   parse: null,
-  comment: false,
+  comment: true,
   sourceMap: undefined,
   sourceMapRoot: null,
   sourceMapWithCode: false,
@@ -35,8 +36,9 @@ const options = {
   verbatim: undefined,
 };
 
-const generate = (ats) => {
-  return escodegen.generate(ats, options);
+const generate = (ats, code) => {
+  ats = escodegen.attachComments(ats, ats.comments, ats.tokens);
+  return escodegen.generate(ats, { ...options });
 };
 
 module.exports = generate;

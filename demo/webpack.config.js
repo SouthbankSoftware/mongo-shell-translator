@@ -64,6 +64,10 @@ const config = {
           ],
         }),
       },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
+      },
       { test: /\.(png|jpg)$/, use: 'url-loader?limit=15000' },
       { test: /\.eot(\?v=\d+.\d+.\d+)?$/, use: 'file-loader' },
       { test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/, use: 'url-loader?limit=10000&mimetype=application/font-woff' },

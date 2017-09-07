@@ -1,18 +1,10 @@
 import findTranslator from './find-translator';
 import generate from './code-generator';
-import options from './options';
+import { parseOptions } from './options';
 
 const esprima = require('esprima');
 const estraverse = require('estraverse');
 const escodegen = require('escodegen');
-
-const parseOptions = {
-  tolerant: true,
-  raw: true,
-  tokens: true,
-  range: true,
-  comment: true,
-};
 
 class MongoShellTranslator {
 
@@ -24,7 +16,7 @@ class MongoShellTranslator {
   translate(shell) {
     const ast = esprima.parseScript(shell, parseOptions);
     estraverse.traverse(ast, {
-      enter: (node, parent) => {
+      enter: (node) => {
         if (node.type === esprima.Syntax.CallExpression) {
           const callee = node.callee;
           if (callee.type === esprima.Syntax.MemberExpression &&
@@ -49,7 +41,7 @@ class MongoShellTranslator {
         }
       },
     });
-    return generate(ast);
+    return generate(ast, shell);
   }
 
 }
