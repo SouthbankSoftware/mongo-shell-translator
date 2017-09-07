@@ -30,19 +30,10 @@ class MongoShellTranslator {
           if (callee.type === esprima.Syntax.MemberExpression &&
             callee.property.name === 'find') {
             this.statementType = 'find';
-            let query;
-            let fields;
-            if (node.arguments.length > 0) {
-              node.arguments.forEach((argument, i) => {
-                if (i === 0) {
-                  query = escodegen.generate(argument);
-                } else if (i === 1) {
-                  fields = escodegen.generate(argument);
-                }
-              });
-            }
             if (callee.object.type === esprima.Syntax.MemberExpression) {
-              callee.object = findTranslator.createFindStatement(findTranslator.findDbName(node), callee.object.property.name);
+              const statementObj = findTranslator.createFindStatement(node, findTranslator.findDbName(node), callee.object.property.name);
+              callee.object = statementObj.object;
+              node.arguments = statementObj.arguments;
             }
           }
         }

@@ -13,7 +13,9 @@ export default class Panel extends React.Component {
   constructor (props) {
     super(props);
     this.state = {
-      shell: 'db.test.find({"name":"joey"}, {_id: 0}) \n db.test.find()',
+      shell: 'db.test.find({"name":"joey"}, {_id: 0}) \n db.test.find() \n '
+        + 'var i = db.test.find().toArray() \n '
+        + 'i = db.test.find()\n',
       translate: '',
     };
   }

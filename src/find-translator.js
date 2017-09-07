@@ -1,4 +1,4 @@
-import options from './options';
+import { syntaxType } from './options';
 
 const esprima = require('esprima');
 const escodegen = require('escodegen');
@@ -9,7 +9,7 @@ const escodegen = require('escodegen');
  * @param {*} dbName  the db command name
  * @param {*} colName  the collection name used on the find command
  */
-const createFindStatement = (dbName, colName) => {
+const createFindStatement = (node, dbName, colName) => {
   const object = {};
   object.type = esprima.Syntax.CallExpression;
   object.arguments = [{ type: 'Literal', value: colName }];
@@ -24,7 +24,11 @@ const createFindStatement = (dbName, colName) => {
       type: esprima.Syntax.Identifier,
     },
   };
-  return object;
+  let args = [];
+  if (node.arguments.length > 0) {
+    args = [node.arguments[0]];
+  }
+  return { object, arguments: args };
 };
 
 /**
@@ -48,7 +52,7 @@ const findDbName = (node) => {
 
 const getCallbackStatement = (syntax) => {
   switch (syntax) {
-    case options.syntaxType.await:
+    case syntaxType.await:
       return {};
     default:
       return {
@@ -111,11 +115,11 @@ const addCallbackOnStatement = (node, syntax) => {
       node.expression = statement;
     }
   } else if (node.type === esprima.Syntax.VariableDeclarator) {
-    node.init.arguments = [getCallbackStatement(options.syntaxType.callback, syntax)];
+    node.init.arguments = [getCallbackStatement(syntaxType.callback, syntax)];
   } else if (node.type === esprima.Syntax.AssignmentExpression) {
-    node.right.arguments = [getCallbackStatement(options.syntaxType.callback, syntax)];
+    node.right.arguments = [getCallbackStatement(syntaxType.callback, syntax)];
   } else {
-    node.expression.arguments = [getCallbackStatement(options.syntaxType.callback, syntax)];
+    node.expression.arguments = [getCallbackStatement(syntaxType.callback, syntax)];
   }
 };
 
