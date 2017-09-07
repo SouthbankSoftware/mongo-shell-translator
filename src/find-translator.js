@@ -132,6 +132,15 @@ const getThenPromise = () => {
 };
 
 /**
+ * get await statement
+ */
+const getAwaitStatement = () => {
+  return {
+    type: 'AwaitExpression',
+  };
+};
+
+/**
  * wrap the statement on the given node. it will attach the given node
  * inside the the statement and return the statement node
  * @param {*} node
@@ -161,6 +170,17 @@ const addCallbackOnStatement = (node, syntax) => {
   let statement;
   switch (syntax) {
     case syntaxType.await:
+      statement = getAwaitStatement();
+      if (node.type === esprima.Syntax.VariableDeclarator) {
+        statement.argument = node.init;
+        node.init = statement;
+      } else if (node.type === esprima.Syntax.AssignmentExpression) {
+        statement.argument = node.right;
+        node.right = statement;
+      } else {
+        statement.argument = node.expression;
+        node.expression = statement;
+      }
       break;
     case syntaxType.promise:
       statement = getToArrayStatement(node, syntax);
