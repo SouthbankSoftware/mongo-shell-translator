@@ -16,7 +16,9 @@
   "author": "Zhao Yi (zhaoyi0113@gmail.com)",
   "license": "ISC",
   "dependencies": {
+    "@blueprintjs/core": "^1.27.0",
     "babel-preset-stage-0": "^6.24.1",
+    "blueprintjs": "^0.0.8",
     "codemirror": "^5.29.0",
     "cross-env": "^5.0.5",
     "escodegen": "^1.8.1",
@@ -24,6 +26,7 @@
     "estraverse": "^4.2.0",
     "mongodb": "^2.2.31",
     "react": "15.6.1",
+    "react-addons-css-transition-group": "^15.6.0",
     "react-codemirror": "^1.0.0",
     "react-dom": "15.6.1",
     "react-hot-loader": "3.0.0-beta.6",

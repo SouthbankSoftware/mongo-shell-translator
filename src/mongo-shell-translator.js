@@ -36,7 +36,7 @@ class MongoShellTranslator {
           node.type === esprima.Syntax.AssignmentExpression) {
           if (this.statementType === 'find') {
             this.statementType = '';
-            findTranslator.addCallbackOnStatement(node, this.stype);
+            findTranslator.addCallbackOnStatement(node, this.sType);
           }
         }
       },

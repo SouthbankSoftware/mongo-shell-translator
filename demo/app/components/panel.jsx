@@ -1,24 +1,27 @@
 import React from 'react';
 
 import CodeMirror from 'react-codemirror';
+import { Radio, RadioGroup } from '@blueprintjs/core';
 
 import CM from 'codemirror';
 import { MongoShellTranslator } from '../../../src/index';
 import '../../node_modules/codemirror/lib/codemirror.css';
+import { syntaxType } from '../../../src/options';
 
 export default class Panel extends React.Component {
   constructor (props) {
     super(props);
     this.state = {
-      shell: 'db.test.find({"name":"joey"}, {_id: 0}) \n db.test.find() \n '
-        + 'var i = db.test.find().toArray() \n '
+      shell: 'db.test.find({"name":"joey"}, {_id: 0}) \ndb.test.find() \n'
+        + 'var i = db.test.find().toArray() \n'
         + 'i = db.test.find()\n',
       translate: '',
+      syntax: syntaxType.callback,
     };
   }
 
   translate () {
-    const translator = new MongoShellTranslator();
+    const translator = new MongoShellTranslator(this.state.syntax);
     const value = translator.translate(this.state.shell);
     this.setState({ translate: value });
     const cm = this.editor.getCodeMirror();
@@ -46,6 +49,15 @@ export default class Panel extends React.Component {
         <div style={{ height: '50px' }}>
           <button onClick={this.translate.bind(this)}>Translate</button>
         </div>
+        <RadioGroup
+          label="Meal Choice"
+          selectedValue={this.state.syntax}
+          onChange={e => this.setState({ syntax: e.target.value })}
+        >
+          <Radio label="Callback" value={syntaxType.callback} />
+          <Radio label="Promise" value={syntaxType.promise} />
+          <Radio label="Await" value={syntaxType.await} />
+        </RadioGroup>
         <CodeMirror
           value={this.state.translate}
           onChange={() => console.log()}

@@ -51,8 +51,11 @@ const findDbName = (node) => {
 };
 
 const getCallbackStatement = (syntax) => {
+  console.log('xxx', syntax);
   switch (syntax) {
     case syntaxType.await:
+      return {};
+    case syntaxType.promise:
       return {};
     default:
       return {
@@ -113,11 +116,11 @@ const addCallbackOnStatement = (node, syntax) => {
       node.expression = statement;
     }
   } else if (node.type === esprima.Syntax.VariableDeclarator) {
-    node.init.arguments = [getCallbackStatement(syntaxType.callback, syntax)];
+    node.init.arguments = [getCallbackStatement(syntax)];
   } else if (node.type === esprima.Syntax.AssignmentExpression) {
-    node.right.arguments = [getCallbackStatement(syntaxType.callback, syntax)];
+    node.right.arguments = [getCallbackStatement(syntax)];
   } else {
-    node.expression.arguments = [getCallbackStatement(syntaxType.callback, syntax)];
+    node.expression.arguments = [getCallbackStatement(syntax)];
   }
 };
 

@@ -23,6 +23,7 @@
     "no-param-reassign": "off",
     "class-methods-use-this": "off",
     "arrow-body-style": "off",
-    "import/extensions": "off"
+    "import/extensions": "off",
+    "react/jsx-no-bind": "off"
   }
 }
