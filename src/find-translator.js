@@ -50,7 +50,10 @@ const findDbName = (node) => {
   return null;
 };
 
-const getCallbackStatement = () => {
+/**
+ * get callback function arguments, it is used for promise and callback cases.
+ */
+const getCallbackArguments = () => {
   return {
     type: esprima.Syntax.FunctionExpression,
     id: null,
@@ -72,6 +75,20 @@ const getCallbackStatement = () => {
 };
 
 /**
+ * add the callback arguments on node statement
+ * @param {*} node
+ */
+const addNodeArguments = (node) => {
+  if (node.type === esprima.Syntax.VariableDeclarator) {
+    node.init.arguments = [getCallbackArguments()];
+  } else if (node.type === esprima.Syntax.AssignmentExpression) {
+    node.right.arguments = [getCallbackArguments()];
+  } else {
+    node.expression.arguments = [getCallbackArguments()];
+  }
+};
+
+/**
  * add toArray statement at the end of find statement.
  * @param node
  */
@@ -89,12 +106,15 @@ const getToArrayStatement = (node, syntax) => {
           name: 'toArray',
         },
       },
-      arguments: syntax === syntaxType.callback ? [getCallbackStatement()] : [],
+      arguments: syntax === syntaxType.callback ? [getCallbackArguments()] : [],
     };
   }
   return null;
 };
 
+/**
+ * get then statement when using promise syntax
+ */
 const getThenPromise = () => {
   return {
     type: 'CallExpression',
@@ -111,7 +131,13 @@ const getThenPromise = () => {
   };
 };
 
-const addStatementToNode = (node, statement) => {
+/**
+ * wrap the statement on the given node. it will attach the given node
+ * inside the the statement and return the statement node
+ * @param {*} node
+ * @param {*} statement
+ */
+const wrapStatementOnNode = (node, statement) => {
   if (statement) {
     if (node.type === esprima.Syntax.VariableDeclarator) {
       statement.callee.object = node.init;
@@ -138,37 +164,15 @@ const addCallbackOnStatement = (node, syntax) => {
       break;
     case syntaxType.promise:
       statement = getToArrayStatement(node, syntax);
-      addStatementToNode(node, statement);
+      wrapStatementOnNode(node, statement);
       statement = getThenPromise(node, syntax);
-      addStatementToNode(node, statement);
-      if (node.type === esprima.Syntax.VariableDeclarator) {
-        node.init.arguments = [getCallbackStatement(syntax)];
-      } else if (node.type === esprima.Syntax.AssignmentExpression) {
-        node.right.arguments = [getCallbackStatement(syntax)];
-      } else {
-        node.expression.arguments = [getCallbackStatement(syntax)];
-      }
+      wrapStatementOnNode(node, statement);
+      addNodeArguments(node);
       break;
     default:
       statement = getToArrayStatement(node, syntax);
-      if (statement) {
-        if (node.type === esprima.Syntax.VariableDeclarator) {
-          statement.callee.object = node.init;
-          node.init = statement;
-        } else if (node.type === esprima.Syntax.AssignmentExpression) {
-          statement.callee.object = node.right;
-          node.right = statement;
-        } else {
-          statement.callee.object = node.expression;
-          node.expression = statement;
-        }
-      } else if (node.type === esprima.Syntax.VariableDeclarator) {
-        node.init.arguments = [getCallbackStatement(syntax)];
-      } else if (node.type === esprima.Syntax.AssignmentExpression) {
-        node.right.arguments = [getCallbackStatement(syntax)];
-      } else {
-        node.expression.arguments = [getCallbackStatement(syntax)];
-      }
+      wrapStatementOnNode(node, statement);
+      addNodeArguments(node);
   }
 };
 
@@ -176,6 +180,6 @@ export default {
   createFindStatement,
   findDbName,
   getToArrayStatement,
-  getCallbackStatement,
+  getCallbackArguments,
   addCallbackOnStatement,
 };
