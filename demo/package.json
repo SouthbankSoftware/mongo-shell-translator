@@ -16,6 +16,7 @@
   "author": "Zhao Yi (zhaoyi0113@gmail.com)",
   "license": "ISC",
   "dependencies": {
+    "babel-preset-stage-0": "^6.24.1",
     "cross-env": "^5.0.5",
     "escodegen": "^1.8.1",
     "esprima": "^4.0.0",

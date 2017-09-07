@@ -1,4 +1,7 @@
+import options from './options';
+
 const esprima = require('esprima');
+const escodegen = require('escodegen');
 
 /**
  * create find statement in native driver. It generates the code
@@ -10,14 +13,17 @@ const createFindStatement = (dbName, colName) => {
   const object = {};
   object.type = esprima.Syntax.CallExpression;
   object.arguments = [{ type: 'Literal', value: colName }];
-  object.callee = {};
-  object.callee.type = esprima.Syntax.MemberExpression;
-  object.callee.property = {};
-  object.callee.property.name = 'collection';
-  object.callee.property.type = esprima.Syntax.Identifier;
-  object.callee.object = {};
-  object.callee.object.name = dbName;
-  object.callee.object.type = esprima.Syntax.Identifier;
+  object.callee = {
+    type: esprima.Syntax.MemberExpression,
+    property: {
+      name: 'collection',
+      type: esprima.Syntax.Identifier,
+    },
+    object: {
+      name: dbName,
+      type: esprima.Syntax.Identifier,
+    },
+  };
   return object;
 };
 
@@ -37,6 +43,58 @@ const findDbName = (node) => {
       break;
     }
   } while (root);
+  return null;
 };
 
-module.exports = { createFindStatement, findDbName };
+const getCallbackStatement = (syntax) => {
+  switch (syntax) {
+    case options.syntaxType.await:
+      return {};
+    default:
+      return {
+        type: esprima.Syntax.FunctionExpression,
+        id: null,
+        body: {
+          type: esprima.Syntax.BlockStatement,
+          body: [],
+        },
+        params: [{
+          type: esprima.Syntax.Identifier,
+          name: 'err',
+        }, {
+          type: esprima.Syntax.Identifier,
+          name: 'docs',
+        }],
+        generator: false,
+        expression: false,
+        async: false,
+      };
+  }
+};
+
+/**
+ * add toArray statement at the end of find statement.
+ * @param node
+ */
+const getToArrayStatement = (node, syntax) => {
+  const statement = escodegen.generate(node);
+  console.log('xxxx', statement);
+  if (!statement.trim().endsWith('toArray();') && !statement.trim().endsWith('toArray()')) {
+    console.log('add toarray');
+    return {
+      type: 'CallExpression',
+      callee: {
+        type: 'MemberExpression',
+        computed: false,
+        object: null,
+        property: {
+          type: 'Identifier',
+          name: 'toArray',
+        },
+      },
+      arguments: [getCallbackStatement(syntax)],
+    };
+  }
+};
+
+export default { createFindStatement, findDbName, getToArrayStatement, getCallbackStatement };

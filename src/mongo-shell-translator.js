@@ -1,5 +1,6 @@
-import { createFindStatement, findDbName } from './find-translator';
+import findTranslator from './find-translator';
 import generate from './code-generator';
+import options from './options';
 
 const esprima = require('esprima');
 const estraverse = require('estraverse');
@@ -40,45 +41,35 @@ class MongoShellTranslator {
               });
             }
             if (callee.object.type === esprima.Syntax.MemberExpression) {
-              callee.object = createFindStatement(findDbName(node), callee.object.property.name);
+              callee.object = findTranslator.createFindStatement(findTranslator.findDbName(node), callee.object.property.name);
             }
-            // if (parent.type === esprima.Syntax.VariableDeclarator ||
-            //   parent.type === esprima.Syntax.ExpressionStatement) {
-            //   if (!node.property) {
-            //     node.type = esprima.Syntax.CallExpression;
-            //     node.callee = {
-            //       type: esprima.Syntax.MemberExpression,
-            //       object: { ...node },
-            //       property: { type: esprima.Syntax.Identifier, name: 'toArray' },
-            //     };
-            //     node.arguments = [];
-            //   }
-            // }
           }
         }
       },
-      leave: (node, parent) => {
-        if (node.type === esprima.Syntax.ExpressionStatement) {
+      leave: (node) => {
+        if (node.type === esprima.Syntax.ExpressionStatement ||
+          node.type === esprima.Syntax.VariableDeclarator ||
+          node.type === esprima.Syntax.AssignmentExpression) {
           if (this.statementType === 'find') {
             this.statementType = '';
-            let statement = escodegen.generate(node);
-            console.log('statement = ', statement);
-            if (!statement.trim().endsWith('toArray();')) {
-              const idx = statement.lastIndexOf(';');
-              statement = `${statement.substring(0, idx)}.toArray();`;
-              const findAst = esprima.parse(statement, parseOptions);
-              console.log('origin node ', node);
-              console.log('new statement = ', statement);
-              console.log('find ast ', findAst);
-              if (findAst && findAst.type === esprima.Syntax.Program) {
-                if (findAst.body && findAst.body.length > 0) {
-                  node.expression.arguments = findAst.body[0].expression.arguments;
-                  node.expression.callee = findAst.body[0].expression.callee;
-                  node.expression.type = findAst.body[0].expression.type;
-                }
+            const statement = findTranslator.getToArrayStatement(node);
+            if (statement) {
+              if (node.type === esprima.Syntax.VariableDeclarator) {
+                statement.callee.object = node.init;
+                node.init = statement;
+              } else if (node.type === esprima.Syntax.AssignmentExpression) {
+                statement.callee.object = node.right;
+                node.right = statement;
+              } else {
+                statement.callee.object = node.expression;
+                node.expression = statement;
               }
-              console.log('new node ', node);
-              console.log('updated node');
+            } else if (node.type === esprima.Syntax.VariableDeclarator) {
+              node.init.arguments = [findTranslator.getCallbackStatement(options.syntaxType.callback)];
+            } else if (node.type === esprima.Syntax.AssignmentExpression) {
+              node.right.arguments = [findTranslator.getCallbackStatement(options.syntaxType.callback)];
+            } else {
+              node.expression.arguments = [findTranslator.getCallbackStatement(options.syntaxType.callback)];
             }
           }
         }
