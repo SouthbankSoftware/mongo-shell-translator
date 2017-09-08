@@ -1,4 +1,5 @@
 const esprima = require('esprima');
+const escodegen = require('escodegen');
 const syntaxType = require('./options').syntaxType;
 /**
  * create collection statement in native driver. It generates the code
@@ -142,6 +143,31 @@ const addNodeArguments = (node, error) => {
 };
 
 /**
+ * add toArray statement at the end of find statement.
+ * @param node
+ */
+const getToArrayStatement = (node, syntax) => {
+  const statement = escodegen.generate(node);
+  if (!statement.trim().endsWith('toArray();') && !statement.trim().endsWith('toArray()')) {
+    return {
+      type: 'CallExpression',
+      callee: {
+        type: 'MemberExpression',
+        computed: false,
+        object: null,
+        property: {
+          type: 'Identifier',
+          name: 'toArray',
+        },
+      },
+      arguments: syntax === syntaxType.callback ? [getCallbackArguments(true)] : [],
+    };
+  }
+  return null;
+};
+
+
+/**
  * add callback on the statement. It can be callback, promise or await/sync
  * @param {*} node
  * @param {*} syntax
@@ -150,6 +176,8 @@ const addCallbackOnStatement = (node, syntax) => {
   let statement;
   switch (syntax) {
     case syntaxType.await:
+      statement = getToArrayStatement(node, syntax);
+      wrapStatementOnNode(node, statement);
       statement = getAwaitStatement();
       if (node.type === esprima.Syntax.VariableDeclarator) {
         statement.argument = node.init;
@@ -163,11 +191,14 @@ const addCallbackOnStatement = (node, syntax) => {
       }
       break;
     case syntaxType.promise:
+      statement = getToArrayStatement(node, syntax);
+      wrapStatementOnNode(node, statement);
       statement = getThenPromise(node, syntax);
       wrapStatementOnNode(node, statement);
-      addNodeArguments(node, false);
+      addNodeArguments(node);
       break;
     default:
+      statement = getToArrayStatement(node, syntax);
       wrapStatementOnNode(node, statement);
       addNodeArguments(node, true);
   }

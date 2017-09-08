@@ -1,11 +1,9 @@
-import findTranslator from './find-translator';
 import commonTranslator from './common-translator';
 import generate from './code-generator';
 import { parseOptions, commandName } from './options';
 
 const esprima = require('esprima');
 const estraverse = require('estraverse');
-const escodegen = require('escodegen');
 
 class MongoShellTranslator {
 
@@ -46,11 +44,11 @@ class MongoShellTranslator {
           node.type === esprima.Syntax.AssignmentExpression) {
           if (this.statementType === commandName.find) {
             this.statementType = '';
-            findTranslator.addCallbackOnStatement(node, this.sType);
+            commonTranslator.addCallbackOnStatement(node, this.sType);
           }
           if (this.statementType === commandName.aggregate) {
             this.statementType = '';
-            findTranslator.addCallbackOnStatement(node, this.sType);
+            commonTranslator.addCallbackOnStatement(node, this.sType);
           }
         }
       },
