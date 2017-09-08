@@ -4,19 +4,6 @@ const commonTranslator = require('./common-translator');
 const esprima = require('esprima');
 const escodegen = require('escodegen');
 
-/**
- * add the callback arguments on node statement
- * @param {*} node
- */
-const addNodeArguments = (node) => {
-  if (node.type === esprima.Syntax.VariableDeclarator) {
-    node.init.arguments = [commonTranslator.getCallbackArguments()];
-  } else if (node.type === esprima.Syntax.AssignmentExpression) {
-    node.right.arguments = [commonTranslator.getCallbackArguments()];
-  } else {
-    node.expression.arguments = [commonTranslator.getCallbackArguments()];
-  }
-};
 
 /**
  * add toArray statement at the end of find statement.
@@ -71,12 +58,12 @@ const addCallbackOnStatement = (node, syntax) => {
       commonTranslator.wrapStatementOnNode(node, statement);
       statement = commonTranslator.getThenPromise(node, syntax);
       commonTranslator.wrapStatementOnNode(node, statement);
-      addNodeArguments(node);
+      commonTranslator.addNodeArguments(node);
       break;
     default:
       statement = getToArrayStatement(node, syntax);
       commonTranslator.wrapStatementOnNode(node, statement);
-      addNodeArguments(node);
+      commonTranslator.addNodeArguments(node);
   }
 };
 

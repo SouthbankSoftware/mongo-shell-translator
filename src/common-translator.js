@@ -1,5 +1,5 @@
 const esprima = require('esprima');
-
+const syntaxType = require('./options').syntaxType;
 /**
  * create collection statement in native driver. It generates the code
  * ` db.collection(COL_NAME)... `
@@ -121,6 +121,53 @@ const getCallbackArguments = () => {
   };
 };
 
+/**
+ * add the callback arguments on node statement
+ * @param {*} node
+ */
+const addNodeArguments = (node) => {
+  if (node.type === esprima.Syntax.VariableDeclarator) {
+    node.init.arguments = [getCallbackArguments()];
+  } else if (node.type === esprima.Syntax.AssignmentExpression) {
+    node.right.arguments = [getCallbackArguments()];
+  } else {
+    node.expression.arguments = [getCallbackArguments()];
+  }
+};
+
+/**
+ * add callback on the statement. It can be callback, promise or await/sync
+ * @param {*} node
+ * @param {*} syntax
+ */
+const addCallbackOnStatement = (node, syntax) => {
+  let statement;
+  switch (syntax) {
+    case syntaxType.await:
+      statement = getAwaitStatement();
+      if (node.type === esprima.Syntax.VariableDeclarator) {
+        statement.argument = node.init;
+        node.init = statement;
+      } else if (node.type === esprima.Syntax.AssignmentExpression) {
+        statement.argument = node.right;
+        node.right = statement;
+      } else {
+        statement.argument = node.expression;
+        node.expression = statement;
+      }
+      break;
+    case syntaxType.promise:
+      statement = getThenPromise(node, syntax);
+      wrapStatementOnNode(node, statement);
+      addNodeArguments(node);
+      break;
+    default:
+      wrapStatementOnNode(node, statement);
+      addNodeArguments(node);
+  }
+};
+
+
 module.exports = {
   getAwaitStatement,
   findDbName,
@@ -128,4 +175,6 @@ module.exports = {
   wrapStatementOnNode,
   getThenPromise,
   getCallbackArguments,
+  addCallbackOnStatement,
+  addNodeArguments,
 };

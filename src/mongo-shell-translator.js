@@ -44,9 +44,13 @@ class MongoShellTranslator {
         if (node.type === esprima.Syntax.ExpressionStatement ||
           node.type === esprima.Syntax.VariableDeclarator ||
           node.type === esprima.Syntax.AssignmentExpression) {
-          if (this.statementType === 'find') {
+          if (this.statementType === commandName.find) {
             this.statementType = '';
             findTranslator.addCallbackOnStatement(node, this.sType);
+          }
+          if (this.statementType === commandName.aggregate) {
+            this.statementType = '';
+            commonTranslator.addCallbackOnStatement(node, this.sType);
           }
         }
       },
