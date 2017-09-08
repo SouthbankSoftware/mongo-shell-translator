@@ -37,7 +37,7 @@ const options = {
 };
 
 const generate = (ats, code) => {
-  ats = escodegen.attachComments(ats, ats.comments, ats.tokens);
+  // ats = escodegen.attachComments(ats, ats.comments, ats.tokens);
   return escodegen.generate(ats, { ...options });
 };
 

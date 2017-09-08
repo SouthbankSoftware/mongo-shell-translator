@@ -196,7 +196,7 @@ const addCallbackOnStatement = (node, syntax) => {
   }
 };
 
-export default {
+module.exports = {
   createFindStatement,
   findDbName,
   getToArrayStatement,

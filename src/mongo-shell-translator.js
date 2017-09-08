@@ -16,6 +16,7 @@ class MongoShellTranslator {
   translate(shell) {
     const ast = esprima.parseScript(shell, parseOptions);
     estraverse.traverse(ast, {
+      cursor: 0,
       enter: (node) => {
         if (node.type === esprima.Syntax.CallExpression) {
           const callee = node.callee;

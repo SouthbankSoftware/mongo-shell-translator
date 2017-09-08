@@ -4,7 +4,7 @@
   "description": "Translate mongo shell command to native driver",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "nyc mocha tests/ --opts mocha.opts"
   },
   "author": "Zhao Yi (zhaoyi0113@gmail.com)",
   "license": "ISC",
@@ -41,7 +41,10 @@
     "eslint-plugin-react": "7.2.0",
     "file-loader": "1.0.0",
     "husky": "0.14.3",
+    "istanbul": "^0.4.5",
     "jest": "20.0.4",
+    "mocha": "^3.5.0",
+    "nyc": "^11.2.1",
     "rimraf": "2.6.1",
     "url-loader": "0.5.8"
   }
