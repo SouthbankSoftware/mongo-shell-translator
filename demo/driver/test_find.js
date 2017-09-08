@@ -63,5 +63,11 @@ MongoClient.connect(url, async(err, db) => {
   // });
 
   const docs = await db.collection('explains').find({ 'user.name.last': 'Hall' }, { _id: 0 }).toArray();
-  console.log(docs);
+  db.collection('explains').aggregate([{
+    $project: {
+      'user.name.last': 1,
+    },
+  }], (err, result) => {
+    console.log(result.length);
+  });
 });
