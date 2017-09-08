@@ -170,6 +170,8 @@ const addCallbackOnStatement = (node, syntax) => {
   let statement;
   switch (syntax) {
     case syntaxType.await:
+      statement = getToArrayStatement(node, syntax);
+      wrapStatementOnNode(node, statement);
       statement = getAwaitStatement();
       if (node.type === esprima.Syntax.VariableDeclarator) {
         statement.argument = node.init;
