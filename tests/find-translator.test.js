@@ -21,7 +21,7 @@ describe('test find translator', () => {
     let driverCode = translator.translate('db.test.find()');
     assert.equal(driverCode, 'db.collection(\'test\').find().toArray(function (err, docs) {\n});');
     // test find with query parameters
-    query = 'db.test.find({$and:[{"lname":"Ford"},{"marks.english": {$gt:35}}]})';
+    query = 'db.test.find({$and:[{"lname":"Ford"},{"marks.english": {$gt:35}}]},{_id:0})';
     driverCode = translator.translate(query);
     assert.equal(driverCode.replace(/\r?\n|\r|\s/g, ''), 'db.collection(\'test\').find({$and:[{\'lname\':\'Ford\'},{\'marks.english\':{$gt:35}}]}).toArray(function(err,docs){});');
     // test find with query and sort, limit

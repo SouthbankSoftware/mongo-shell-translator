@@ -46,11 +46,8 @@ export default class Panel extends React.Component {
           onChange={e => this.setState({ shell: e })}
           options={options}
         />
-        <div style={{ height: '50px' }}>
-          <button onClick={this.translate.bind(this)}>Translate</button>
-        </div>
         <RadioGroup
-          label="Meal Choice"
+          label="Syntax Choice"
           selectedValue={this.state.syntax}
           onChange={e => this.setState({ syntax: e.target.value })}
         >
@@ -58,6 +55,10 @@ export default class Panel extends React.Component {
           <Radio label="Promise" value={syntaxType.promise} />
           <Radio label="Await" value={syntaxType.await} />
         </RadioGroup>
+
+        <div style={{ height: '50px' }}>
+          <button onClick={this.translate.bind(this)}>Translate</button>
+        </div>
         <CodeMirror
           value={this.state.translate}
           onChange={() => console.log()}
