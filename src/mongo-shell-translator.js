@@ -1,6 +1,7 @@
 import findTranslator from './find-translator';
+import commonTranslator from './common-translator';
 import generate from './code-generator';
-import { parseOptions } from './options';
+import { parseOptions, commandName } from './options';
 
 const esprima = require('esprima');
 const estraverse = require('estraverse');
@@ -20,13 +21,21 @@ class MongoShellTranslator {
       enter: (node) => {
         if (node.type === esprima.Syntax.CallExpression) {
           const callee = node.callee;
-          if (callee.type === esprima.Syntax.MemberExpression &&
-            callee.property.name === 'find') {
-            this.statementType = 'find';
-            if (callee.object.type === esprima.Syntax.MemberExpression) {
-              const statementObj = findTranslator.createFindStatement(node, findTranslator.findDbName(node), callee.object.property.name);
-              callee.object = statementObj.object;
-              node.arguments = statementObj.arguments;
+          if (callee.type === esprima.Syntax.MemberExpression) {
+            if (callee.property.name === commandName.find) {
+              this.statementType = commandName.find;
+              if (callee.object.type === esprima.Syntax.MemberExpression) {
+                const statementObj = commonTranslator.createCollectionStatement(node, commonTranslator.findDbName(node), callee.object.property.name);
+                callee.object = statementObj.object;
+                node.arguments = statementObj.arguments;
+              }
+            } else if (callee.property.name === commandName.aggregate) {
+              this.statementType = commandName.aggregate;
+              if (callee.object.type === esprima.Syntax.MemberExpression) {
+                const statementObj = commonTranslator.createCollectionStatement(node, commonTranslator.findDbName(node), callee.object.property.name);
+                callee.object = statementObj.object;
+                node.arguments = statementObj.arguments;
+              }
             }
           }
         }

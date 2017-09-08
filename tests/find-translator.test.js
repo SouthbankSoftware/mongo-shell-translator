@@ -2,16 +2,17 @@ const assert = require('assert');
 const esprima = require('esprima');
 const escodegen = require('escodegen');
 const findtranslator = require('../src/find-translator');
+const commonTranslator = require('../src/common-translator');
 const MongoShellTranslator = require('../src/mongo-shell-translator').MongoShellTranslator;
 const options = require('../src/options');
 
 describe('test find translator', () => {
   it('test find db name', () => {
     let ast = esprima.parseScript('db.test.find()');
-    let dbName = findtranslator.findDbName(ast.body[0].expression);
+    let dbName = commonTranslator.findDbName(ast.body[0].expression);
     assert.equal(dbName, 'db');
     ast = esprima.parseScript('mydb.test.find()');
-    dbName = findtranslator.findDbName(ast.body[0].expression);
+    dbName = commonTranslator.findDbName(ast.body[0].expression);
     assert.equal(dbName, 'mydb');
   });
 

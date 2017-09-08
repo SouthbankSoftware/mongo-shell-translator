@@ -10,3 +10,8 @@ export const syntaxType = {
   promise: 'promise',
   await: 'await',
 };
+export const commandName = {
+  find: 'find',
+  aggregate: 'aggregate',
+}
+;
