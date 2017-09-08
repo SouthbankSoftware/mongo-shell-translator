@@ -50,7 +50,7 @@ class MongoShellTranslator {
           }
           if (this.statementType === commandName.aggregate) {
             this.statementType = '';
-            commonTranslator.addCallbackOnStatement(node, this.sType);
+            findTranslator.addCallbackOnStatement(node, this.sType);
           }
         }
       },

@@ -23,7 +23,7 @@ const getToArrayStatement = (node, syntax) => {
           name: 'toArray',
         },
       },
-      arguments: syntax === syntaxType.callback ? [commonTranslator.getCallbackArguments()] : [],
+      arguments: syntax === syntaxType.callback ? [commonTranslator.getCallbackArguments(true)] : [],
     };
   }
   return null;
@@ -63,7 +63,7 @@ const addCallbackOnStatement = (node, syntax) => {
     default:
       statement = getToArrayStatement(node, syntax);
       commonTranslator.wrapStatementOnNode(node, statement);
-      commonTranslator.addNodeArguments(node);
+      commonTranslator.addNodeArguments(node, true);
   }
 };
 

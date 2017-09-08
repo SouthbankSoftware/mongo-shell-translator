@@ -58,16 +58,25 @@ console.log(escodegen.generate(ast, {
 const url = 'mongodb://localhost:27017/SampleCollections';
 
 MongoClient.connect(url, async(err, db) => {
-  // db.collection('explains').find({ 'user.name.last': 'Hall' }, { _id: 0 }).toArray((err, docs) => {
+  db.collection('explains').find({ 'user.name.last': 'Hall' }, { _id: 0 }).toArray((err, docs) => {
+    console.log(docs);
+  });
+
+  // const docs = await db.collection('explains').find({ 'user.name.last': 'Hall' }, { _id: 0 }).toArray();
+  // db.collection('explains').aggregate([{
+  //   $project: {
+  //     'user.name.last': 1,
+  //   },
+  // }], (err, result) => {
+  //   console.log(result.length);
+  // });
+  // db.collection('explains').find().toArray().then((docs) => {
   //   console.log(docs);
   // });
-
-  const docs = await db.collection('explains').find({ 'user.name.last': 'Hall' }, { _id: 0 }).toArray();
-  db.collection('explains').aggregate([{
-    $project: {
-      'user.name.last': 1,
-    },
-  }], (err, result) => {
-    console.log(result.length);
-  });
+  // db.collection('explains').aggregate([
+  //   { $match: { $and: [{ 'tags.label': { $ne: '' } }] } },
+  //   { $sort: { 'user.age': 1 } },
+  // ]).toArray().then((docs) => {
+  //   console.log(docs);
+  // });
 });

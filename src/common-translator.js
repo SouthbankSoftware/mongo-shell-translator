@@ -99,8 +99,20 @@ const findDbName = (node) => {
 
 /**
  * get callback function arguments, it is used for promise and callback cases.
+ * @param error: whether include error argument
  */
-const getCallbackArguments = () => {
+const getCallbackArguments = (error = false) => {
+  const params = error ? [{
+    type: esprima.Syntax.Identifier,
+    name: 'err',
+  }, {
+    type: esprima.Syntax.Identifier,
+    name: 'docs',
+  }] : [{
+    type: esprima.Syntax.Identifier,
+    name: 'docs',
+  }];
+
   return {
     type: esprima.Syntax.FunctionExpression,
     id: null,
@@ -108,13 +120,7 @@ const getCallbackArguments = () => {
       type: esprima.Syntax.BlockStatement,
       body: [],
     },
-    params: [{
-      type: esprima.Syntax.Identifier,
-      name: 'err',
-    }, {
-      type: esprima.Syntax.Identifier,
-      name: 'docs',
-    }],
+    params,
     generator: false,
     expression: false,
     async: false,
@@ -125,13 +131,13 @@ const getCallbackArguments = () => {
  * add the callback arguments on node statement
  * @param {*} node
  */
-const addNodeArguments = (node) => {
+const addNodeArguments = (node, error) => {
   if (node.type === esprima.Syntax.VariableDeclarator) {
-    node.init.arguments = [getCallbackArguments()];
+    node.init.arguments = [getCallbackArguments(error)];
   } else if (node.type === esprima.Syntax.AssignmentExpression) {
-    node.right.arguments = [getCallbackArguments()];
+    node.right.arguments = [getCallbackArguments(error)];
   } else {
-    node.expression.arguments = [getCallbackArguments()];
+    node.expression.arguments = [getCallbackArguments(error)];
   }
 };
 
@@ -159,11 +165,11 @@ const addCallbackOnStatement = (node, syntax) => {
     case syntaxType.promise:
       statement = getThenPromise(node, syntax);
       wrapStatementOnNode(node, statement);
-      addNodeArguments(node);
+      addNodeArguments(node, false);
       break;
     default:
       wrapStatementOnNode(node, statement);
-      addNodeArguments(node);
+      addNodeArguments(node, true);
   }
 };
 
