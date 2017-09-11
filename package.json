@@ -1,6 +1,6 @@
 {
   "name": "mongo-shell-translator",
-  "version": "0.0.3-alpha.8",
+  "version": "0.0.4",
   "description": "Translate mongo shell command to native driver",
   "main": "dist/index.js",
   "scripts": {
@@ -8,6 +8,10 @@
     "build": "babel -d dist/ src/",
     "prepublish": "yarn run clean && yarn run build",
     "clean": "rimraf ./dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SouthbankSoftware/mongo-shell-translator.git"
   },
   "author": "Joey Zhao (joey@southbanksoftware.com)",
   "license": "AGPL-3.0",
