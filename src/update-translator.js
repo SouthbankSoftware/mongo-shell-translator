@@ -23,7 +23,7 @@ const createCollectionStatement = (node, dbName, colName) => {
     node.callee.property.name = multi ? 'updateMany' : 'updateOne';
   }
   const statement = translator.createCollectionStatement(node, dbName, colName);
-  return { ...statement, arguments: node.arguments };
+  return Object.assign(statement, { arguments: node.arguments });
 };
 
 module.exports = {
