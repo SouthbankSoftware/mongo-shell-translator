@@ -13,8 +13,8 @@ const createCollectionStatement = (node, dbName, colName) => {
       }
     });
   } else {
-    const args = [];
-    for (let i = 0; i < 3 - argLen; i += 1) {
+    const args = node.arguments;
+    for (let i = 0; i < 2 - argLen; i += 1) {
       args.push({ type: 'ObjectExpression', properties: [] });
     }
     node.arguments = args;

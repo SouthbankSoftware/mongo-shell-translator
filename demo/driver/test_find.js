@@ -38,13 +38,27 @@ const aggregateTest = (db) => {
   // });
 };
 
-const updateTest = (db) => {
+const updateTest = async(db) => {
   // db.collection('explains').updateOne({}, {}, {}, (docs) => {
   //   console.log('doc:', docs);
   // });
-  db.collection('test').updateOne({ a: 1 }, { b: 2, a: 1 }, { upsert: true, w: 1 }, (err, docs) => {
-    console.log(docs);
-  });
+  // db.collection('test').updateOne({ a: 1 }, { b: 2, a: 1 }, (err, docs) => {
+  //   console.log(docs);
+  // });
+  // db.collection('collection').updateOne({ name: 'Central Perk Cafe' }, { $set: { violations: 3 } }, (err, r) => {
+  //   console.log(r);
+  // });
+
+  // db.collection('explains').updateOne({ name: 'Central Perk Cafe' }, {}).then((r) => {
+  //   console.log(r);
+  // });
+  const r = await db.collection('explains').updateOne({ name: 'Central Perk Cafe' }, {});
+  console.log(r);
+};
+
+const fun = async function(db) {
+  const r = await db.collection('test').updateOne({}, {});
+  console.log(r);
 };
 
 MongoClient.connect(url, async(err, db) => {
@@ -74,5 +88,6 @@ MongoClient.connect(url, async(err, db) => {
   //   console.log(docs);
   // });
   // aggregateTest(db);
-  updateTest(db);
+  // updateTest(db);
+  fun(db);
 });
