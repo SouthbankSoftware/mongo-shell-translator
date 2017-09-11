@@ -87,6 +87,8 @@ const findDbName = (node) => {
       root = root.object;
     } else if (!root.object && root.type === esprima.Syntax.Identifier) {
       return root.name;
+    } else if (root && root.type === esprima.Syntax.CallExpression) {
+      root = root.callee;
     } else {
       break;
     }
