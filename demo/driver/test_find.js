@@ -76,9 +76,12 @@ const deleteTest = async(db) => {
   //   console.log(r);
   // });
 
-  db.collection('explains').deleteOne({ 'user.name.last': 'Lee' }, { w: 1, wtimeout: 400, j: false }).then((r) => {
-    console.log(r);
-  });
+  // db.collection('explains').deleteOne({ 'user.name.last': 'Lee' }, { w: 1, wtimeout: 400, j: false }).then((r) => {
+  //   console.log(r);
+  // });
+
+  const r = await db.collection('explains').deleteOne({ 'user.name.last': 'Lee' }, { w: 1, wtimeout: 400, j: false });
+  console.log(r);
 };
 
 MongoClient.connect(url, async(err, db) => {
