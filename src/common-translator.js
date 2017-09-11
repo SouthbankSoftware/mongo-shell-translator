@@ -98,16 +98,16 @@ const findDbName = (node) => {
  * get callback function arguments, it is used for promise and callback cases.
  * @param error: whether include error argument
  */
-const getCallbackArguments = (error = false) => {
+const getCallbackArguments = (error = false, argName = 'docs') => {
   const params = error ? [{
     type: esprima.Syntax.Identifier,
     name: 'err',
   }, {
     type: esprima.Syntax.Identifier,
-    name: 'docs',
+    name: argName,
   }] : [{
     type: esprima.Syntax.Identifier,
-    name: 'docs',
+    name: argName,
   }];
 
   return {
@@ -127,14 +127,18 @@ const getCallbackArguments = (error = false) => {
 /**
  * add the callback arguments on node statement
  * @param {*} node
+ * @param {*} error   whether the callback function has error argument
+ * @param {*} append   whether append callback function argument instead of replace
+ * @param {*} argName   the argument name
  */
-const addNodeArguments = (node, error) => {
+const addNodeArguments = (node, error, append, argName = 'docs') => {
+  const argument = getCallbackArguments(error, argName);
   if (node.type === esprima.Syntax.VariableDeclarator) {
-    node.init.arguments = [getCallbackArguments(error)];
+    append === true ? node.init.arguments.push(argument) : node.init.arguments = [argument];
   } else if (node.type === esprima.Syntax.AssignmentExpression) {
-    node.right.arguments = [getCallbackArguments(error)];
+    append === true ? node.right.arguments.push(argument) : node.right.arguments = [argument];
   } else {
-    node.expression.arguments = [getCallbackArguments(error)];
+    append === true ? node.expression.arguments.push(argument) : node.expression.arguments = [argument];
   }
 };
 
@@ -167,13 +171,19 @@ const getToArrayStatement = (node, syntax) => {
  * add callback on the statement. It can be callback, promise or await/sync
  * @param {*} node
  * @param {*} syntax
+ * @param {*} toArray   whether append toArray at the end of the statement
+ * @param {*} error   whether the callback function has error argument
+ * @param {*} append   whether append callback function argument instead of replace
+ * @param {*} argName   the argument name
  */
-const addCallbackOnStatement = (node, syntax) => {
+const addCallbackOnStatement = (node, syntax, toArray = true, error = true, append = false, argName = 'docs') => {
   let statement;
   switch (syntax) {
     case syntaxType.await:
-      statement = getToArrayStatement(node, syntax);
-      wrapStatementOnNode(node, statement);
+      if (toArray) {
+        statement = getToArrayStatement(node, syntax);
+        wrapStatementOnNode(node, statement);
+      }
       statement = getAwaitStatement();
       if (node.type === esprima.Syntax.VariableDeclarator) {
         statement.argument = node.init;
@@ -187,16 +197,21 @@ const addCallbackOnStatement = (node, syntax) => {
       }
       break;
     case syntaxType.promise:
-      statement = getToArrayStatement(node, syntax);
-      wrapStatementOnNode(node, statement);
+      if (toArray) {
+        statement = getToArrayStatement(node, syntax);
+        wrapStatementOnNode(node, statement);
+      }
       statement = getThenPromise(node, syntax);
       wrapStatementOnNode(node, statement);
-      addNodeArguments(node);
+      addNodeArguments(node, false, append, argName);
       break;
     default:
-      statement = getToArrayStatement(node, syntax);
-      wrapStatementOnNode(node, statement);
-      addNodeArguments(node, true);
+      if (toArray) {
+        statement = getToArrayStatement(node, syntax);
+        wrapStatementOnNode(node, statement);
+      }
+      addNodeArguments(node, error, append, argName);
+
   }
 };
 

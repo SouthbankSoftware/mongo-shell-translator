@@ -18,28 +18,41 @@ const url = 'mongodb://localhost:27017/SampleCollections';
 
 const aggregateTest = (db) => {
   // db.collection('explains').aggregate([], { explain: false, allowDiskUse: true, maxTimeMS: 100, bypassDocumentValidation: true }).toArray((err, docs) => {
-  // console.log(docs);
-  // });
-  // db.collection('explains').aggregate([], { explain: false, allowDiskUse: true, maxTimeMS: 100, bypassDocumentValidation: true }).toArray().then((docs) => {
   //   console.log(docs);
   // });
-  db.collection('enron_messages').aggregate([
-    { $match: { $and: [{ 'headers.To': { $ne: '' } }] } },
-    { $unwind: '$subFolder' },
-    {
-      $group: {
-        _id: { filename: '$filename' },
-        count: { $sum: 1 },
-        'headers-sum': { $sum: '$headers' },
-      },
-    },
-  ], { allowDiskUse: true }).toArray().then((docs) => {
+  db.collection('explains').aggregate([], { explain: false, allowDiskUse: true, maxTimeMS: 100, bypassDocumentValidation: true }).toArray().then((docs) => {
+    console.log(docs);
+  });
+  // db.collection('enron_messages').aggregate([
+  //   { $match: { $and: [{ 'headers.To': { $ne: '' } }] } },
+  //   { $unwind: '$subFolder' },
+  //   {
+  //     $group: {
+  //       _id: { filename: '$filename' },
+  //       count: { $sum: 1 },
+  //       'headers-sum': { $sum: '$headers' },
+  //     },
+  //   },
+  // ], { allowDiskUse: true }).toArray().then((docs) => {
+  //   console.log(docs);
+  // });
+};
+
+const updateTest = (db) => {
+  // db.collection('explains').updateOne({}, {}, {}, (docs) => {
+  //   console.log('doc:', docs);
+  // });
+  db.collection('test').updateOne({ a: 1 }, { b: 2, a: 1 }, { upsert: true, w: 1 }, (err, docs) => {
     console.log(docs);
   });
 };
 
 MongoClient.connect(url, async(err, db) => {
   // db.collection('explains').find({ 'user.name.last': 'Hall' }, { _id: 0 }).toArray((err, docs) => {
+  //   console.log(docs);
+  // });
+
+  // db.collection('explains').find({ 'user.name.last': 'Hall' }, { _id: 0 }).toArray().then((docs) => {
   //   console.log(docs);
   // });
 
@@ -60,5 +73,6 @@ MongoClient.connect(url, async(err, db) => {
   // ]).toArray().then((docs) => {
   //   console.log(docs);
   // });
-  aggregateTest(db);
+  // aggregateTest(db);
+  updateTest(db);
 });
