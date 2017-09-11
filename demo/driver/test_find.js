@@ -65,7 +65,18 @@ const deleteTest = async(db) => {
   // db.collection('explains').deleteOne({ 'user.name.last': 'Lee' }, (err, r) => {
   //   console.log(r);
   // });
-  db.collection('explains').deleteOne({ 'user.name.last': 'Lee' }, { w: 1, wtimeout: 400, j: false }, (err, r) => {
+  // db.collection('explains').deleteOne({ 'user.name.last': 'Lee' }, { w: 1, wtimeout: 400, j: false }, (err, r) => {
+  //   console.log(r);
+  // });
+  // db.collection('explains').deleteOne({}).then((r) => {
+  //   console.log(r);
+  // });
+
+  // db.collection('explains').deleteOne({ 'user.name.last': 'Lee' }).then((r) => {
+  //   console.log(r);
+  // });
+
+  db.collection('explains').deleteOne({ 'user.name.last': 'Lee' }, { w: 1, wtimeout: 400, j: false }).then((r) => {
     console.log(r);
   });
 };
