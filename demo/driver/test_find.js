@@ -61,6 +61,15 @@ const fun = async function(db) {
   console.log(r);
 };
 
+const deleteTest = async(db) => {
+  // db.collection('explains').deleteOne({ 'user.name.last': 'Lee' }, (err, r) => {
+  //   console.log(r);
+  // });
+  db.collection('explains').deleteOne({ 'user.name.last': 'Lee' }, { w: 1, wtimeout: 400, j: false }, (err, r) => {
+    console.log(r);
+  });
+};
+
 MongoClient.connect(url, async(err, db) => {
   // db.collection('explains').find({ 'user.name.last': 'Hall' }, { _id: 0 }).toArray((err, docs) => {
   //   console.log(docs);
@@ -89,5 +98,6 @@ MongoClient.connect(url, async(err, db) => {
   // });
   // aggregateTest(db);
   // updateTest(db);
-  fun(db);
+  // fun(db);
+  deleteTest(db);
 });
