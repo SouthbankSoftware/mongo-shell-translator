@@ -43,42 +43,6 @@ class MongoShellTranslator {
                 node.arguments = statementObj.arguments;
               }
             }
-            // if (callee.property.name === commandName.find) {
-            //   this.statementType = callee.property.name;
-            //   if (callee.object.type === esprima.Syntax.MemberExpression) {
-            //     const statementObj = findTranslator.createCollectionStatement(node,
-            //       commonTranslator.findDbName(node), callee.object.property.name);
-            //     callee.object = statementObj.object;
-            //     node.arguments = statementObj.arguments;
-            //   }
-            // } else if (callee.property.name === commandName.aggregate) {
-            //   this.statementType = commandName.aggregate;
-            //   if (callee.object.type === esprima.Syntax.MemberExpression) {
-            //     const statementObj = commonTranslator.createCollectionStatement(node,
-            //       commonTranslator.findDbName(node), callee.object.property.name);
-            //     callee.object = statementObj.object;
-            //     node.arguments = statementObj.arguments;
-            //   }
-            // } else if (callee.property.name === commandName.update ||
-            //   callee.property.name === commandName.updateOne ||
-            //   callee.property.name === commandName.updateMany) {
-            //   this.statementType = callee.property.name;
-            //   if (callee.object.type === esprima.Syntax.MemberExpression) {
-            //     const statementObj = updateTranslator.createCollectionStatement(node,
-            //       commonTranslator.findDbName(node), callee.object.property.name, parent);
-            //     callee.object = statementObj.object;
-            //     node.arguments = statementObj.arguments;
-            //   }
-            // } else if (callee.property.name === commandName.deleteOne ||
-            //   callee.property.name === commandName.deleteMany) {
-            //   this.statementType = callee.property.name;
-            //   if (callee.object.type === esprima.Syntax.MemberExpression) {
-            //     const statementObj = deleteTranslator.createCollectionStatement(node,
-            //       commonTranslator.findDbName(node), callee.object.property.name);
-            //     callee.object = statementObj.object;
-            //     node.arguments = statementObj.arguments;
-            //   }
-            // }
           }
         }
       },

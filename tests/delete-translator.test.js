@@ -23,8 +23,8 @@ describe('test delete translator', () => {
     let nativeCode = translator.translate('db.test.deleteOne()');
     utils.assertStatementEqual(nativeCode, 'db.collection(\'test\').deleteOne({}).then(function (r) {});');
 
-    nativeCode = translator.translate('db.explains.deleteOne({\'user.name.last\': \'Lee\'})');
-    utils.assertStatementEqual(nativeCode, 'db.collection(\'explains\').deleteOne({\'user.name.last\': \'Lee\'}).then(function (r) {});');
+    nativeCode = translator.translate('db.explains.deleteMany({\'user.name.last\': \'Lee\'})');
+    utils.assertStatementEqual(nativeCode, 'db.collection(\'explains\').deleteMany({\'user.name.last\': \'Lee\'}).then(function (r) {});');
 
     nativeCode = translator.translate('db.explains.deleteOne({\'user.name.last\': \'Lee\'}, {w:1, wtimeout:400, j: false})');
     utils.assertStatementEqual(nativeCode, 'db.collection(\'explains\').deleteOne({\'user.name.last\': \'Lee\'}, {w:1, wtimeout:400, j: false}).then(function (r) {});');

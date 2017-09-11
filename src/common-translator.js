@@ -138,7 +138,8 @@ const addNodeArguments = (node, error, append, argName = 'docs') => {
   } else if (node.type === esprima.Syntax.AssignmentExpression) {
     append === true ? node.right.arguments.push(argument) : node.right.arguments = [argument];
   } else {
-    append === true ? node.expression.arguments.push(argument) : node.expression.arguments = [argument];
+    append === true ? node.expression.arguments.push(argument) :
+      node.expression.arguments = [argument];
   }
 };
 
