@@ -1,12 +1,13 @@
 {
   "name": "mongo-shell-translator",
-  "version": "0.0.3-alpha.7",
+  "version": "0.0.3-alpha.8",
   "description": "Translate mongo shell command to native driver",
   "main": "dist/index.js",
   "scripts": {
     "test": "nyc mocha tests/ --opts mocha.opts",
     "build": "babel -d dist/ src/",
-    "prepublish": "yarn run build"
+    "prepublish": "yarn run clean && yarn run build",
+    "clean": "rimraf ./dist"
   },
   "author": "Joey Zhao (joey@southbanksoftware.com)",
   "license": "AGPL-3.0",
@@ -47,7 +48,7 @@
     "jest": "20.0.4",
     "mocha": "^3.5.0",
     "nyc": "^11.2.1",
-    "rimraf": "2.6.1",
+    "rimraf": "^2.6.1",
     "url-loader": "0.5.8"
   }
 }
