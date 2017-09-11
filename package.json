@@ -1,13 +1,14 @@
 {
   "name": "mongo-shell-translator",
-  "version": "0.0.3-alpha.6",
+  "version": "0.0.3-alpha.7",
   "description": "Translate mongo shell command to native driver",
   "main": "dist/index.js",
   "scripts": {
     "test": "nyc mocha tests/ --opts mocha.opts",
-    "build": "babel -d dist/ src/"
+    "build": "babel -d dist/ src/",
+    "prepublish": "yarn run build"
   },
-  "author": "Joey Zhao (zhaoyi0113@gmail.com)",
+  "author": "Joey Zhao (joey@southbanksoftware.com)",
   "license": "AGPL-3.0",
   "dependencies": {
     "babel-preset-stage-0": "^6.24.1",
