@@ -1,6 +1,6 @@
 {
   "name": "mongo-shell-translator",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Translate mongo shell command to native driver",
   "main": "index.js",
   "scripts": {
