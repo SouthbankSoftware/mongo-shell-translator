@@ -1,10 +1,11 @@
 {
   "name": "mongo-shell-translator",
-  "version": "0.0.3-alpha.5",
+  "version": "0.0.3-alpha.6",
   "description": "Translate mongo shell command to native driver",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "nyc mocha tests/ --opts mocha.opts"
+    "test": "nyc mocha tests/ --opts mocha.opts",
+    "build": "babel -d dist/ src/"
   },
   "author": "Joey Zhao (zhaoyi0113@gmail.com)",
   "license": "AGPL-3.0",
