@@ -1,11 +1,22 @@
 import commonTranslator from './common-translator';
 import findTranslator from './find-translator';
 import updateTranslator from './update-translator';
+import deleteTranslator from './delete-translator';
 import generate from './code-generator';
 import { parseOptions, commandName } from './options';
 
 const esprima = require('esprima');
 const estraverse = require('estraverse');
+
+const translators = {
+  [commandName.find]: findTranslator,
+  [commandName.aggregate]: commonTranslator,
+  [commandName.deleteMany]: deleteTranslator,
+  [commandName.deleteOne]: deleteTranslator,
+  [commandName.update]: updateTranslator,
+  [commandName.updateOne]: updateTranslator,
+  [commandName.updateMany]: updateTranslator,
+};
 
 class MongoShellTranslator {
 
@@ -23,16 +34,18 @@ class MongoShellTranslator {
           const callee = node.callee;
           if (callee.type === esprima.Syntax.MemberExpression) {
             if (callee.property.name === commandName.find) {
-              this.statementType = commandName.find;
+              this.statementType = callee.property.name;
               if (callee.object.type === esprima.Syntax.MemberExpression) {
-                const statementObj = findTranslator.createCollectionStatement(node, commonTranslator.findDbName(node), callee.object.property.name);
+                const statementObj = findTranslator.createCollectionStatement(node,
+                  commonTranslator.findDbName(node), callee.object.property.name);
                 callee.object = statementObj.object;
                 node.arguments = statementObj.arguments;
               }
             } else if (callee.property.name === commandName.aggregate) {
               this.statementType = commandName.aggregate;
               if (callee.object.type === esprima.Syntax.MemberExpression) {
-                const statementObj = commonTranslator.createCollectionStatement(node, commonTranslator.findDbName(node), callee.object.property.name);
+                const statementObj = commonTranslator.createCollectionStatement(node,
+                  commonTranslator.findDbName(node), callee.object.property.name);
                 callee.object = statementObj.object;
                 node.arguments = statementObj.arguments;
               }
@@ -41,7 +54,17 @@ class MongoShellTranslator {
               callee.property.name === commandName.updateMany) {
               this.statementType = callee.property.name;
               if (callee.object.type === esprima.Syntax.MemberExpression) {
-                const statementObj = updateTranslator.createCollectionStatement(node, commonTranslator.findDbName(node), callee.object.property.name, parent);
+                const statementObj = updateTranslator.createCollectionStatement(node,
+                  commonTranslator.findDbName(node), callee.object.property.name, parent);
+                callee.object = statementObj.object;
+                node.arguments = statementObj.arguments;
+              }
+            } else if (callee.property.name === commandName.deleteOne ||
+              callee.property.name === commandName.deleteMany) {
+              this.statementType = callee.property.name;
+              if (callee.object.type === esprima.Syntax.MemberExpression) {
+                const statementObj = deleteTranslator.createCollectionStatement(node,
+                  commonTranslator.findDbName(node), callee.object.property.name);
                 callee.object = statementObj.object;
                 node.arguments = statementObj.arguments;
               }
@@ -54,7 +77,9 @@ class MongoShellTranslator {
           node.type === esprima.Syntax.VariableDeclarator ||
           node.type === esprima.Syntax.AssignmentExpression) {
           if (this.statementType === commandName.find ||
-            this.statementType === commandName.aggregate
+            this.statementType === commandName.aggregate ||
+            this.statementType === commandName.deleteMany ||
+            this.statementType === commandName.deleteOne
           ) {
             this.statementType = '';
             commonTranslator.addCallbackOnStatement(node, this.sType);
