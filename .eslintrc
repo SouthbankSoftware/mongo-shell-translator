@@ -25,6 +25,7 @@
     "arrow-body-style": "off",
     "import/extensions": "off",
     "react/jsx-no-bind": "off",
-    "no-case-declarations": "off"
+    "no-case-declarations": "off",
+    "no-multi-str": "off"
   }
 }

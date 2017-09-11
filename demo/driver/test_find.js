@@ -17,7 +17,23 @@ ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
 const url = 'mongodb://localhost:27017/SampleCollections';
 
 const aggregateTest = (db) => {
-  db.collection('explains').aggregate([], { explain: false, allowDiskUse: true, maxTimeMS: 100, bypassDocumentValidation: true }).toArray((err, docs) => {
+  // db.collection('explains').aggregate([], { explain: false, allowDiskUse: true, maxTimeMS: 100, bypassDocumentValidation: true }).toArray((err, docs) => {
+  // console.log(docs);
+  // });
+  // db.collection('explains').aggregate([], { explain: false, allowDiskUse: true, maxTimeMS: 100, bypassDocumentValidation: true }).toArray().then((docs) => {
+  //   console.log(docs);
+  // });
+  db.collection('enron_messages').aggregate([
+    { $match: { $and: [{ 'headers.To': { $ne: '' } }] } },
+    { $unwind: '$subFolder' },
+    {
+      $group: {
+        _id: { filename: '$filename' },
+        count: { $sum: 1 },
+        'headers-sum': { $sum: '$headers' },
+      },
+    },
+  ], { allowDiskUse: true }).toArray().then((docs) => {
     console.log(docs);
   });
 };
