@@ -6,7 +6,7 @@ const createCollectionStatement = (node, dbName, colName) => {
   if (node.arguments.length > 0) {
     args = [node.arguments[0]];
   }
-  return { ...statement, arguments: args };
+  return Object.assign(statement, { arguments: args });
 };
 
 module.exports = {
