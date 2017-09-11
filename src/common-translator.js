@@ -22,11 +22,7 @@ const createCollectionStatement = (node, dbName, colName) => {
       type: esprima.Syntax.Identifier,
     },
   };
-  let args = [];
-  if (node.arguments.length > 0) {
-    args = [node.arguments[0]];
-  }
-  return { object, arguments: args };
+  return { object, arguments: node.arguments };
 };
 
 
@@ -203,7 +199,6 @@ const addCallbackOnStatement = (node, syntax) => {
       addNodeArguments(node, true);
   }
 };
-
 
 module.exports = {
   getAwaitStatement,

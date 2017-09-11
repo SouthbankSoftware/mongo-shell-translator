@@ -1,4 +1,5 @@
 import commonTranslator from './common-translator';
+import findTranslator from './find-translator';
 import generate from './code-generator';
 import { parseOptions, commandName } from './options';
 
@@ -23,7 +24,7 @@ class MongoShellTranslator {
             if (callee.property.name === commandName.find) {
               this.statementType = commandName.find;
               if (callee.object.type === esprima.Syntax.MemberExpression) {
-                const statementObj = commonTranslator.createCollectionStatement(node, commonTranslator.findDbName(node), callee.object.property.name);
+                const statementObj = findTranslator.createCollectionStatement(node, commonTranslator.findDbName(node), callee.object.property.name);
                 callee.object = statementObj.object;
                 node.arguments = statementObj.arguments;
               }
