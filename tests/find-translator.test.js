@@ -6,15 +6,6 @@ const MongoShellTranslator = require('../src/mongo-shell-translator').MongoShell
 const options = require('../src/options');
 
 describe('test find translator', () => {
-  it('test find db name', () => {
-    let ast = esprima.parseScript('db.test.find()');
-    let dbName = commonTranslator.findDbName(ast.body[0].expression);
-    assert.equal(dbName, 'db');
-    ast = esprima.parseScript('mydb.test.find()');
-    dbName = commonTranslator.findDbName(ast.body[0].expression);
-    assert.equal(dbName, 'mydb');
-  });
-
   it('test translate find command with callback', () => {
     const translator = new MongoShellTranslator();
     let query = '';

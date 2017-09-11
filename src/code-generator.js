@@ -36,9 +36,9 @@ const options = {
   verbatim: undefined,
 };
 
-const generate = (ats, code) => {
+const generate = (ats) => {
   // ats = escodegen.attachComments(ats, ats.comments, ats.tokens);
-  return escodegen.generate(ats, { ...options });
+  return escodegen.generate(ats, Object.assign({}, options));
 };
 
 module.exports = generate;
