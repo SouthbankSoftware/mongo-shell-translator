@@ -1,9 +1,7 @@
 const assert = require('assert');
-const esprima = require('esprima');
-const escodegen = require('escodegen');
-const commonTranslator = require('../src/common-translator');
 const MongoShellTranslator = require('../src/mongo-shell-translator').MongoShellTranslator;
 const options = require('../src/options');
+const utils = require('./utils');
 
 describe('test find translator', () => {
   it('test translate find command with callback', () => {
@@ -86,5 +84,11 @@ describe('test find translator', () => {
     translator = new MongoShellTranslator(options.syntaxType.promise);
     driverCode = translator.translate('db.test.find().toArray()');
     assert.equal(driverCode, 'db.collection(\'test\').find().toArray().then(function (docs) {\n});');
+  });
+
+  it('test db.getSiblingDB parser', () => {
+    const translator = new MongoShellTranslator();
+    const driverCode = translator.translate('db.getSiblingDB("db").aaaa.find({"name":"joey"}, {_id: 0}) ');
+    utils.assertStatementEqual(driverCode, 'db.collection(\'aaaa\').find({ \'name\': \'joey\' }).toArray(function (err, docs) {});');
   });
 });

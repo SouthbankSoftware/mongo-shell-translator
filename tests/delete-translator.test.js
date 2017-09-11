@@ -1,6 +1,3 @@
-const assert = require('assert');
-const esprima = require('esprima');
-const escodegen = require('escodegen');
 const MongoShellTranslator = require('../src/mongo-shell-translator').MongoShellTranslator;
 const options = require('../src/options');
 const utils = require('./utils');
