@@ -6,7 +6,7 @@
   "scripts": {
     "test": "nyc mocha tests/ --opts mocha.opts"
   },
-  "author": "Zhao Yi (zhaoyi0113@gmail.com)",
+  "author": "Joey Zhao (zhaoyi0113@gmail.com)",
   "license": "AGPL-3.0",
   "dependencies": {
     "babel-preset-stage-0": "^6.24.1",
