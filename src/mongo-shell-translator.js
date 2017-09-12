@@ -12,6 +12,8 @@ const estraverse = require('estraverse');
 const translators = {
   [commandName.find]: findTranslator,
   [commandName.findOne]: findOneTranslator,
+  [commandName.findOneAndDelete]: findOneTranslator,
+  [commandName.findOneAndReplace]: findOneTranslator,
   [commandName.aggregate]: commonTranslator,
   [commandName.deleteMany]: deleteTranslator,
   [commandName.deleteOne]: deleteTranslator,

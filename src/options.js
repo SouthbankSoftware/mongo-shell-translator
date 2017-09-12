@@ -13,6 +13,9 @@ export const syntaxType = {
 export const commandName = {
   find: 'find',
   findOne: 'findOne',
+  findOneAndDelete: 'findOneAndDelete',
+  findOneAndReplace: 'findOneAndReplace',
+  findOneAndUpdate: 'findOneAndUpdate',
   aggregate: 'aggregate',
   update: 'update',
   updateOne: 'updateOne',
