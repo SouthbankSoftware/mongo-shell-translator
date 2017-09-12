@@ -14,6 +14,7 @@ const translators = {
   [commandName.findOne]: findOneTranslator,
   [commandName.findOneAndDelete]: findOneTranslator,
   [commandName.findOneAndReplace]: findOneTranslator,
+  [commandName.findOneAndUpdate]: findOneTranslator,
   [commandName.aggregate]: commonTranslator,
   [commandName.deleteMany]: deleteTranslator,
   [commandName.deleteOne]: deleteTranslator,
