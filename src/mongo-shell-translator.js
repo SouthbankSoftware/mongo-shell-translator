@@ -1,5 +1,6 @@
 import commonTranslator from './common-translator';
 import findTranslator from './find-translator';
+import findOneTranslator from './find-one-translator';
 import updateTranslator from './update-translator';
 import deleteTranslator from './delete-translator';
 import generate from './code-generator';
@@ -10,6 +11,7 @@ const estraverse = require('estraverse');
 
 const translators = {
   [commandName.find]: findTranslator,
+  [commandName.findOne]: findOneTranslator,
   [commandName.aggregate]: commonTranslator,
   [commandName.deleteMany]: deleteTranslator,
   [commandName.deleteOne]: deleteTranslator,

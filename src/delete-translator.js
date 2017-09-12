@@ -1,16 +1,9 @@
 const translator = require('./common-translator');
+const argumentCreator = require('./argument-creator');
 
 const createCollectionStatement = (node, dbName, colName) => {
-  const argLen = node.arguments.length;
-  if (argLen < 1) {
-    const args = node.arguments;
-    for (let i = 0; i < 1 - argLen; i += 1) {
-      args.push({ type: 'ObjectExpression', properties: [] });
-    }
-    node.arguments = args;
-  }
   const statement = translator.createCollectionStatement(node, dbName, colName);
-  return Object.assign(statement, { arguments: node.arguments });
+  return Object.assign(statement, { arguments: argumentCreator.createArguments(node, 1) });
 };
 
 module.exports = {
