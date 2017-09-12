@@ -1,13 +1,12 @@
 {
   "name": "mongo-shell-translator",
-  "version": "0.0.1-alpha.5",
+  "version": "0.0.1-alpha.6",
   "description": "Translate mongo shell command to native driver",
   "main": "dist/index.js",
   "scripts": {
     "test": "nyc mocha tests/ --opts mocha.opts",
     "build": "babel -d dist/ src/",
     "prepublish": "yarn run clean && yarn run build",
-    "postinstall": "yarn run clean && yarn run build",
     "clean": "rimraf ./dist"
   },
   "repository": {
