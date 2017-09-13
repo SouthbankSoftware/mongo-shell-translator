@@ -3,6 +3,7 @@ import findTranslator from './find-translator';
 import findOneTranslator from './find-one-translator';
 import updateTranslator from './update-translator';
 import deleteTranslator from './delete-translator';
+import insertTranslator from './insert-translator';
 import generate from './code-generator';
 import { parseOptions, commandName } from './options';
 
@@ -21,6 +22,9 @@ const translators = {
   [commandName.update]: updateTranslator,
   [commandName.updateOne]: updateTranslator,
   [commandName.updateMany]: updateTranslator,
+  [commandName.insert]: insertTranslator,
+  [commandName.insertOne]: insertTranslator,
+  [commandName.insertMany]: insertTranslator,
 };
 
 class MongoShellTranslator {
@@ -68,6 +72,10 @@ class MongoShellTranslator {
           } else if (this.statementType === commandName.deleteMany ||
             this.statementType === commandName.deleteOne) {
             this.statementType = '';
+            commonTranslator.addCallbackOnStatement(node, this.sType, false, true, true, 'r');
+          } else if (this.statementType === commandName.insert ||
+            this.statementType === commandName.insertOne ||
+            this.statementType === commandName.insertMany) {
             commonTranslator.addCallbackOnStatement(node, this.sType, false, true, true, 'r');
           }
         }

@@ -21,6 +21,8 @@ export const commandName = {
   updateOne: 'updateOne',
   updateMany: 'updateMany',
   insert: 'insert',
+  insertOne: 'insertOne',
+  insertMany: 'insertMany',
   deleteOne: 'deleteOne',
   deleteMany: 'deleteMany',
 };
