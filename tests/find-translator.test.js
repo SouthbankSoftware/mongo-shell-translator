@@ -8,7 +8,7 @@ describe('test find translator', () => {
     const translator = new MongoShellTranslator();
     let query = '';
     let driverCode = translator.translate('db.test.find()');
-    utils.assertStatementEqual(driverCode, 'db.collection(\'test\').find({}).toArray(function (err, docs) {\n});');
+    utils.assertStatementEqual(driverCode, 'db.collection(\'test\').find().toArray(function (err, docs) {\n});');
     // test find with query parameters
     query = 'db.test.find({$and:[{"lname":"Ford"},{"marks.english": {$gt:35}}]},{_id:0})';
     driverCode = translator.translate(query);
@@ -32,7 +32,7 @@ describe('test find translator', () => {
     const translator = new MongoShellTranslator(options.syntaxType.promise);
     let query = '';
     let driverCode = translator.translate('db.test.find()');
-    utils.assertStatementEqual(driverCode, 'db.collection(\'test\').find({}).toArray().then(function (docs) {\n});');
+    utils.assertStatementEqual(driverCode, 'db.collection(\'test\').find().toArray().then(function (docs) {\n});');
     // test find with query parameters
     query = 'db.test.find({$and:[{"lname":"Ford"},{"marks.english": {$gt:35}}]})';
     driverCode = translator.translate(query);
@@ -55,7 +55,7 @@ describe('test find translator', () => {
     const translator = new MongoShellTranslator(options.syntaxType.await);
     let query = '';
     let driverCode = translator.translate('const fun = async function(){db.test.find()}');
-    utils.assertStatementEqual(driverCode, 'const fun = async function(){await db.collection(\'test\').find({}).toArray();};');
+    utils.assertStatementEqual(driverCode, 'const fun = async function(){await db.collection(\'test\').find().toArray();};');
     // test find with query parameters
     query = 'const fun = async function(){db.test.find({$and:[{"lname":"Ford"},{"marks.english": {$gt:35}}]})}';
     driverCode = translator.translate(query);
@@ -77,13 +77,13 @@ describe('test find translator', () => {
   it('test the find statement with toArray at the end', () => {
     let translator = new MongoShellTranslator(options.syntaxType.await);
     let driverCode = translator.translate('const fun = async function(){db.test.find().toArray()}');
-    utils.assertStatementEqual(driverCode, 'const fun = async function(){await db.collection(\'test\').find({}).toArray();};');
+    utils.assertStatementEqual(driverCode, 'const fun = async function(){await db.collection(\'test\').find().toArray();};');
     translator = new MongoShellTranslator(options.syntaxType.callback);
     driverCode = translator.translate('db.test.find().toArray()');
-    utils.assertStatementEqual(driverCode, 'db.collection(\'test\').find({}).toArray(function (err, docs) {\n});');
+    utils.assertStatementEqual(driverCode, 'db.collection(\'test\').find().toArray(function (err, docs) {\n});');
     translator = new MongoShellTranslator(options.syntaxType.promise);
     driverCode = translator.translate('db.test.find().toArray()');
-    utils.assertStatementEqual(driverCode, 'db.collection(\'test\').find({}).toArray().then(function (docs) {\n});');
+    utils.assertStatementEqual(driverCode, 'db.collection(\'test\').find().toArray().then(function (docs) {\n});');
   });
 
   it('test db.getSiblingDB parser', () => {

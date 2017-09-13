@@ -1,16 +1,17 @@
 /**
- * @param argNum  the numbre of arguments are required
- * @param removeExtra if true it will remove arguments after {argNum}
+ * @param requiredArguNum  the number of required arguments are required
+ * @param maxArguNum the max number of auguments
  */
-const createArguments = (node, argNum, removeExtra) => {
+const createArguments = (node, requiredArguNum, maxArguNum) => {
   const argLen = node.arguments.length;
   const args = node.arguments;
-  if (argLen < argNum) {
-    for (let i = 0; i < argNum - argLen; i += 1) {
+  console.log('arg len ', argLen, requiredArguNum, maxArguNum);
+  if (argLen < requiredArguNum) {
+    for (let i = 0; i < requiredArguNum - argLen; i += 1) {
       args.push({ type: 'ObjectExpression', properties: [] });
     }
-  } else if (removeExtra && argLen > argNum) {
-    args.splice(argNum, argLen - argNum);
+  } else if (maxArguNum > 0 && argLen > maxArguNum) {
+    args.splice(maxArguNum, argLen - requiredArguNum);
   }
   return args;
 };
