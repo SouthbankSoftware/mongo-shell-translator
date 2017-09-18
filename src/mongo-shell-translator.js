@@ -36,52 +36,31 @@ class MongoShellTranslator {
 
   translate(shell) {
     const ast = esprima.parseScript(shell, parseOptions);
-    estraverse.traverse(ast, {
-      cursor: 0,
-      enter: (node) => {
-        if (node.type === esprima.Syntax.CallExpression) {
-          const callee = node.callee;
-          if (callee.type === esprima.Syntax.MemberExpression) {
+
+    console.log('ast =', ast);
+    const statements = ast.body;
+    const newAst = { type: 'Program', body: [] };
+    statements.forEach((statement) => {
+      switch (statement.type) {
+        case esprima.Syntax.ExpressionStatement:
+          const callee = statement.expression.callee;
+          if (statement.expression.type === esprima.Syntax.CallExpression &&
+            callee.type === esprima.Syntax.MemberExpression &&
+            callee.property && callee.property.type === esprima.Syntax.Identifier) {
             const translator = translators[callee.property.name];
             if (translator) {
-              this.statementType = callee.property.name;
-              if (callee.object.type === esprima.Syntax.MemberExpression) {
-                const statementObj = translator.createCollectionStatement(node,
-                  commonTranslator.findDbName(node), callee.object.property.name);
-                callee.object = statementObj.object;
-                node.arguments = statementObj.arguments;
-              }
+              const s = translator.createParameterizedFunction(statement);
+              newAst.body.push(s);
             }
           }
-        }
-      },
-      leave: (node) => {
-        if (node.type === esprima.Syntax.ExpressionStatement ||
-          node.type === esprima.Syntax.VariableDeclarator ||
-          node.type === esprima.Syntax.AssignmentExpression) {
-          if (this.statementType === commandName.find ||
-            this.statementType === commandName.aggregate
-          ) {
-            this.statementType = '';
-            commonTranslator.addCallbackOnStatement(node, this.sType);
-          } else if (this.statementType === commandName.updateOne ||
-            this.statementType === commandName.updateMany ||
-            this.statementType === commandName.update) {
-            this.statementType = '';
-            commonTranslator.addCallbackOnStatement(node, this.sType, false, true, true, 'r');
-          } else if (this.statementType === commandName.deleteMany ||
-            this.statementType === commandName.deleteOne) {
-            this.statementType = '';
-            commonTranslator.addCallbackOnStatement(node, this.sType, false, true, true, 'r');
-          } else if (this.statementType === commandName.insert ||
-            this.statementType === commandName.insertOne ||
-            this.statementType === commandName.insertMany) {
-            commonTranslator.addCallbackOnStatement(node, this.sType, false, true, true, 'r');
-          }
-        }
-      },
+          break;
+        case esprima.Syntax.VariableDeclaration:
+        default:
+          // skip parsing it
+      }
     });
-    return generate(ast, shell);
+    console.log('new ast ', newAst);
+    return generate(newAst, shell);
   }
 
 }

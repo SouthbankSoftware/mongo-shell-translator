@@ -1,6 +1,8 @@
 const esprima = require('esprima');
 const escodegen = require('escodegen');
 const syntaxType = require('./options').syntaxType;
+const commandName = require('./options').commandName;
+
 /**
  * create collection statement in native driver. It generates the code
  * ` db.collection(COL_NAME)... `
@@ -94,6 +96,10 @@ const findDbName = (node) => {
     }
   } while (root);
   return null;
+};
+
+const findCollectionName = (statement) => {
+  return statement.expression.callee.object.property.name;
 };
 
 /**
@@ -218,6 +224,34 @@ const addCallbackOnStatement = (node, syntax, toArray = true, error = true, appe
   }
 };
 
+const findSupportedStatement = (statement) => {
+  let root = null;
+  if (statement.type === esprima.Syntax.ExpressionStatement) {
+    if (statement.expression.type === esprima.Syntax.AssignmentExpression) {
+      root = statement.expression.right.callee;
+    } else if (statement.expression.type === esprima.Syntax.CallExpression) {
+      root = statement.expression.callee;
+    }
+  } else if (statement.type === esprima.Syntax.VariableDeclaration) {
+    root = statement.declarations[0].init.callee;
+  }
+  do {
+    if (root && root.type === esprima.Syntax.MemberExpression &&
+      root.property.type === esprima.Syntax.Identifier) {
+      const name = root.property.name;
+      if (Object.values(commandName).indexOf(name) > -1) {
+        return name;
+      }
+      if (root.object && root.object.type === esprima.Syntax.CallExpression) {
+        root = root.object.callee;
+      }
+    } else {
+      break;
+    }
+  } while (root);
+  return null;
+};
+
 module.exports = {
   getAwaitStatement,
   findDbName,
@@ -227,4 +261,6 @@ module.exports = {
   getCallbackArguments,
   addCallbackOnStatement,
   addNodeArguments,
+  findCollectionName,
+  findSupportedStatement,
 };
