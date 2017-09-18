@@ -82,15 +82,26 @@ const getAwaitStatement = () => {
  * for example: `db.test.find()` will return "db"
  * @param {*} node  the call expression of the find statement
  */
-const findDbName = (node) => {
-  let root = node.callee;
+const findDbName = (statement) => {
+  let root = null;
+  if (statement.type === esprima.Syntax.ExpressionStatement) {
+    if (statement.expression.type === esprima.Syntax.AssignmentExpression) {
+      root = statement.expression.right.callee;
+    } else if (statement.expression.type === esprima.Syntax.CallExpression) {
+      root = statement.expression.callee;
+    }
+  } else if (statement.type === esprima.Syntax.VariableDeclaration) {
+    root = statement.declarations[0].init.callee;
+  }
   do {
-    if (root && root.type === esprima.Syntax.MemberExpression && root.object) {
-      root = root.object;
-    } else if (!root.object && root.type === esprima.Syntax.Identifier) {
-      return root.name;
-    } else if (root && root.type === esprima.Syntax.CallExpression) {
-      root = root.callee;
+    if (root && root.type === esprima.Syntax.MemberExpression) {
+      if (root.object.type === esprima.Syntax.Identifier) {
+        return root.object.name;
+      } else if (root.object.type === esprima.Syntax.CallExpression) {
+        root = root.object.callee;
+      } else {
+        root = root.object;
+      }
     } else {
       break;
     }

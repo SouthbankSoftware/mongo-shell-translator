@@ -41,26 +41,19 @@ class MongoShellTranslator {
     const statements = ast.body;
     const newAst = { type: 'Program', body: [] };
     statements.forEach((statement) => {
-      switch (statement.type) {
-        case esprima.Syntax.ExpressionStatement:
-          const callee = statement.expression.callee;
-          if (statement.expression.type === esprima.Syntax.CallExpression &&
-            callee.type === esprima.Syntax.MemberExpression &&
-            callee.property && callee.property.type === esprima.Syntax.Identifier) {
-            const translator = translators[callee.property.name];
-            if (translator) {
-              const s = translator.createParameterizedFunction(statement);
-              newAst.body.push(s);
-            }
-          }
-          break;
-        case esprima.Syntax.VariableDeclaration:
-        default:
-          // skip parsing it
+      const name = commonTranslator.findSupportedStatement(statement);
+      if (name) {
+        const translator = translators[name];
+        if (translator) {
+          const tran = translator.createParameterizedFunction(statement);
+          newAst.body.push(tran);
+        }
       }
     });
     console.log('new ast ', newAst);
-    return generate(newAst, shell);
+    const code = generate(newAst, shell);
+    console.log('generated:', code);
+    return code;
   }
 
 }
