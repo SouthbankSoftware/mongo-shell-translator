@@ -8,8 +8,7 @@ const template = require('./template-ast');
  * @param {*} statement
  */
 const createParameterizedFunction = (statement) => {
-  const db = translator.findDbName(statement.expression);
-  const callee = statement.expression.callee;
+  const db = translator.findDbName(statement);
   const collection = translator.findCollectionName(statement);
   const functionStatement = template.buildFunctionTemplate(`${collection}Find`, []);
   return functionStatement;

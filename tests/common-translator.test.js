@@ -44,6 +44,15 @@ describe('test common translator', () => {
     ast = esprima.parseScript('db.SampleCollections.find({}, {})');
     name = commonTranslator.findCollectionName(ast.body[0]);
     assert.equal(name, 'SampleCollections');
+
+    ast = esprima.parseScript('var i = db.SampleCollections.find({}, {})');
+    name = commonTranslator.findCollectionName(ast.body[0]);
+    assert.equal(name, 'SampleCollections');
+
+
+    ast = esprima.parseScript('i = db.SampleCollections.find({}, {})');
+    name = commonTranslator.findCollectionName(ast.body[0]);
+    assert.equal(name, 'SampleCollections');
   });
 
   it('test find supported statement', () => {

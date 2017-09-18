@@ -110,7 +110,33 @@ const findDbName = (statement) => {
 };
 
 const findCollectionName = (statement) => {
-  return statement.expression.callee.object.property.name;
+  let root = null;
+  if (statement.type === esprima.Syntax.ExpressionStatement) {
+    if (statement.expression.type === esprima.Syntax.AssignmentExpression) {
+      root = statement.expression.right.callee;
+    } else if (statement.expression.type === esprima.Syntax.CallExpression) {
+      root = statement.expression.callee;
+    }
+  } else if (statement.type === esprima.Syntax.VariableDeclaration) {
+    root = statement.declarations[0].init.callee;
+  }
+  do {
+    if (root && root.type === esprima.Syntax.MemberExpression) {
+      if (root.object.type === esprima.Syntax.Identifier) {
+        if (root.property) {
+          return root.property.name;
+        }
+        break;
+      } else if (root.object.type === esprima.Syntax.CallExpression) {
+        root = root.object.callee;
+      } else {
+        root = root.object;
+      }
+    } else {
+      break;
+    }
+  } while (root);
+  return null;
 };
 
 /**
