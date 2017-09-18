@@ -16,11 +16,23 @@ describe('test common translator', () => {
     ast = esprima.parseScript('i = mydb.test.find()');
     dbName = commonTranslator.findDbName(ast.body[0]);
     assert.equal(dbName, 'mydb');
+
+    ast = esprima.parseScript('var i = mydb.test.find()');
+    dbName = commonTranslator.findDbName(ast.body[0]);
+    assert.equal(dbName, 'mydb');
   });
 
   it('test get sibling db', () => {
-    const ast = esprima.parseScript('db.getSiblingDB("test").find()');
-    const dbName = commonTranslator.findDbName(ast.body[0]);
+    let ast = esprima.parseScript('db.getSiblingDB("test").find()');
+    let dbName = commonTranslator.findDbName(ast.body[0]);
+    assert.equal(dbName, 'db');
+
+    ast = esprima.parseScript('i = db.getSiblingDB("test").find()');
+    dbName = commonTranslator.findDbName(ast.body[0]);
+    assert.equal(dbName, 'db');
+
+    ast = esprima.parseScript('var i = db.getSiblingDB("test").find()');
+    dbName = commonTranslator.findDbName(ast.body[0]);
     assert.equal(dbName, 'db');
   });
 
