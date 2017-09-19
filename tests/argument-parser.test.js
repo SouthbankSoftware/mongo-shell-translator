@@ -39,6 +39,11 @@ describe('argument parser test suite', () => {
     expression = translator.findSupportedStatement(code.body[0]).expression;
     num = parameterParser.getParameterNumber(expression.arguments[0]);
     assert.equal(num, 0);
+
+    code = esprima.parseScript('db.test.find({$and: [{"first": "f"}, {"last": "l"}, {"middle": "m"}]})');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    num = parameterParser.getParameterNumber(expression.arguments[0]);
+    assert.equal(num, 3);
   });
 
   it('test parser empty query parameter', () => {
@@ -89,6 +94,18 @@ describe('argument parser test suite', () => {
     assert.equal(qCode, '{"age": q.age,"nested1": {"key1": q.key1,"nested2": {"key2": q.key2,"nested3": {"key3": q.key3}}}}');
   });
 
+  it('test parser array parameter', () => {
+    let code = esprima.parseScript('db.test.find({$and: [{"first": true}, {"last": true}]})');
+    let { expression } = translator.findSupportedStatement(code.body[0]);
+    let qCode = parameterParser.parseQueryParameters(expression.arguments[0]);
+    assert.equal(qCode, '{$and: [{"first": first},{"last": last}]}');
+
+    code = esprima.parseScript('db.test.find({"name": "aaa", $and: [{"first": true}, {"last": true}], "name": "aaa"})');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    qCode = parameterParser.parseQueryManyParameters(expression.arguments[0]);
+    assert.equal(qCode, '{"name": q.name,$and: [{"first": q.first},{"last": q.last}],"name": q.name}');
+  });
+
   it('test add operator on query', () => {
     let code = esprima.parseScript('db.test.find({$exits: {"name": true}})');
     let { expression } = translator.findSupportedStatement(code.body[0]);
@@ -124,5 +141,10 @@ describe('argument parser test suite', () => {
     expression = translator.findSupportedStatement(code.body[0]).expression;
     qCode = parameterParser.parseQueryParameters(expression.arguments[0]);
     assert.equal(qCode, '{qty: {$ne: qty}}');
+
+    code = esprima.parseScript('db.test.find({ qty: { $ne: "ne" }, qty: {$lt: 100}, qty: {$ne: 30} } )');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    qCode = parameterParser.parseQueryParameters(expression.arguments[0]);
+    assert.equal(qCode, '{qty: {$ne: qty},qty: {$lt: qty},qty: {$ne: qty}}');
   });
 });

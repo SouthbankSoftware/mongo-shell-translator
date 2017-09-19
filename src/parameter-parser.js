@@ -6,6 +6,10 @@ const getParameterNumber = (arg, num = 0) => {
       num += 1;
     } else if (property.value.type === esprima.Syntax.ObjectExpression) {
       num = getParameterNumber(property.value, num);
+    } else if (property.value.type === esprima.Syntax.ArrayExpression) {
+      property.value.elements.forEach((element) => {
+        num = getParameterNumber(element, num);
+      });
     }
   });
   return num;
@@ -13,7 +17,13 @@ const getParameterNumber = (arg, num = 0) => {
 
 const parseObjectExpressionArgument = (arg, many = false, parentKey = '') => {
   let queryObject = '{';
-  arg.properties.forEach((property, i) => {
+  let properties;
+  if (arg.type === esprima.Syntax.ArrayExpression) {
+    properties = arg.elements;
+  } else {
+    properties = arg.properties;
+  }
+  properties.forEach((property, i) => {
     let keyValue = '';
     let keyName = '';
     if (property.key.type === esprima.Syntax.Identifier) {
@@ -35,6 +45,15 @@ const parseObjectExpressionArgument = (arg, many = false, parentKey = '') => {
       }
     } else if (property.value.type === esprima.Syntax.ObjectExpression) {
       queryObject += `${keyName}: ${parseObjectExpressionArgument(property.value, many, keyName)}`;
+    } else if (property.value.type === esprima.Syntax.ArrayExpression) {
+      queryObject += `${keyName}: [`;
+      property.value.elements.forEach((element, j) => {
+        queryObject += `${parseObjectExpressionArgument(element, many, keyName)}`;
+        if (j < property.value.elements.length - 1) {
+          queryObject += ',';
+        }
+      });
+      queryObject += ']';
     }
     if (i < arg.properties.length - 1) {
       queryObject += ',';
