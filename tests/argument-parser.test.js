@@ -61,6 +61,16 @@ describe('argument parser test suite', () => {
     expression = translator.findSupportedStatement(code.body[0]).expression;
     qCode = parameterParser.parseQueryParameters(expression.arguments[0]);
     assert.equal(qCode, '{}');
+
+    code = esprima.parseScript('db.test.find()');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    qCode = parameterParser.parseQueryManyParameters(expression.arguments[0]);
+    assert.equal(qCode, '');
+
+    code = esprima.parseScript('db.test.find({})');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    qCode = parameterParser.parseQueryManyParameters(expression.arguments[0]);
+    assert.equal(qCode, '{}');
   });
 
   it('test parse simple query parameters', () => {
@@ -161,5 +171,10 @@ describe('argument parser test suite', () => {
     expression = translator.findSupportedStatement(code.body[0]).expression;
     qCode = parameterParser.parseQueryParameters(expression.arguments[0]);
     assert.equal(qCode, '{qty: {$nin: qty}}');
+
+    code = esprima.parseScript('db.test.find({ qty: { $nin: [ 5, 15 ] } })');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    qCode = parameterParser.parseQueryManyParameters(expression.arguments[0]);
+    assert.equal(qCode, '{qty: {$nin: q.qty}}');
   });
 });

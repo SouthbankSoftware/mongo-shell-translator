@@ -23,12 +23,7 @@ const getParameterNumber = (arg, num = 0) => {
 
 const parseObjectExpressionArgument = (arg, many = false, parentKey = '') => {
   let queryObject = '{';
-  let properties;
-  if (arg.type === esprima.Syntax.ArrayExpression) {
-    properties = arg.elements;
-  } else {
-    properties = arg.properties;
-  }
+  const properties = arg.properties;
   properties.forEach((property, i) => {
     let keyValue = '';
     let keyName = '';
@@ -61,7 +56,7 @@ const parseObjectExpressionArgument = (arg, many = false, parentKey = '') => {
       }
       if (simpleArrayElement) {
         if (many) {
-          queryObject += `${keyName}: : q.${keyValue}`;
+          queryObject += `${keyName}: q.${keyValue}`;
         } else {
           queryObject += `${keyName}: ${keyValue}`;
         }
