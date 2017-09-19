@@ -20,9 +20,16 @@ const createParameterizedFunction = (statement, findExpression) => {
   const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
   let queryCmd = '';
   if (args.length > 0) {
-    functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
-    const queryObject = parameterParser.parseQueryParameters(args[0]);
-    queryCmd += `const query = ${queryObject}`;
+    const pNum = parameterParser.getParameterNumber(args[0]);
+    if (pNum <= 4) {
+      functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
+      const queryObject = parameterParser.parseQueryParameters(args[0]);
+      queryCmd += `const query = ${queryObject}`;
+    } else {
+      functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
+      const queryObject = parameterParser.parseQueryManyParameters(args[0]);
+      queryCmd += `const query = ${queryObject}`;
+    }
   }
   if (args.length > 1) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'fields' });
