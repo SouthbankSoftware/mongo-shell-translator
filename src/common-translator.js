@@ -263,23 +263,28 @@ const addCallbackOnStatement = (node, syntax, toArray = true, error = true, appe
 
 const findSupportedStatement = (statement) => {
   let root = null;
+  let expression = null;
   if (statement.type === esprima.Syntax.ExpressionStatement) {
     if (statement.expression.type === esprima.Syntax.AssignmentExpression) {
       root = statement.expression.right.callee;
+      expression = statement.expression.right;
     } else if (statement.expression.type === esprima.Syntax.CallExpression) {
       root = statement.expression.callee;
+      expression = statement.expression;
     }
   } else if (statement.type === esprima.Syntax.VariableDeclaration) {
     root = statement.declarations[0].init.callee;
+    expression = statement.declarations[0].init;
   }
   do {
     if (root && root.type === esprima.Syntax.MemberExpression &&
       root.property.type === esprima.Syntax.Identifier) {
       const name = root.property.name;
       if (Object.values(commandName).indexOf(name) > -1) {
-        return name;
+        return { name, expression };
       }
       if (root.object && root.object.type === esprima.Syntax.CallExpression) {
+        expression = root.object;
         root = root.object.callee;
       }
     } else {

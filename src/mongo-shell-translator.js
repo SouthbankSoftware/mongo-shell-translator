@@ -9,6 +9,7 @@ import { parseOptions, commandName } from './options';
 
 const esprima = require('esprima');
 const estraverse = require('estraverse');
+const escodegen = require('escodegen');
 
 const translators = {
   [commandName.find]: findTranslator,
@@ -35,19 +36,21 @@ class MongoShellTranslator {
   }
 
   translate(shell) {
-    const ast = esprima.parseScript(shell, parseOptions);
-
+    let ast = esprima.parseScript(shell, parseOptions);
+    ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
     console.log('ast =', ast);
     const statements = ast.body;
     const newAst = { type: 'Program', body: [] };
     statements.forEach((statement) => {
-      const name = commonTranslator.findSupportedStatement(statement);
+      const { name, expression } = commonTranslator.findSupportedStatement(statement);
       if (name) {
         const translator = translators[name];
         if (translator) {
-          const tran = translator.createParameterizedFunction(statement);
+          const tran = translator.createParameterizedFunction(statement, expression);
           newAst.body.push(tran);
         }
+      } else {
+        newAst.body.push(statement);
       }
     });
     console.log('new ast ', newAst);

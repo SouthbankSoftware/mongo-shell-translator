@@ -13,7 +13,6 @@ const createCollectionStatement = (node, dbName, colName) => {
       multi = false;
     }
   }
-  console.log('multi insert ', multi);
   if (node.callee && node.callee.property && node.callee.property.name === 'insert') {
     node.callee.property.name = multi ? 'insertMany' : 'insertOne';
   }
