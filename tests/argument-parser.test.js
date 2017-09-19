@@ -44,6 +44,11 @@ describe('argument parser test suite', () => {
     expression = translator.findSupportedStatement(code.body[0]).expression;
     num = parameterParser.getParameterNumber(expression.arguments[0]);
     assert.equal(num, 3);
+
+    code = esprima.parseScript('db.test.find({ qty: { $in: [ 5, 15 ] } })');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    num = parameterParser.getParameterNumber(expression.arguments[0]);
+    assert.equal(num, 1);
   });
 
   it('test parser empty query parameter', () => {
@@ -146,5 +151,15 @@ describe('argument parser test suite', () => {
     expression = translator.findSupportedStatement(code.body[0]).expression;
     qCode = parameterParser.parseQueryParameters(expression.arguments[0]);
     assert.equal(qCode, '{qty: {$ne: qty},qty: {$lt: qty},qty: {$ne: qty}}');
+
+    code = esprima.parseScript('db.test.find({ qty: { $in: [ 5, 15 ] } })');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    qCode = parameterParser.parseQueryParameters(expression.arguments[0]);
+    assert.equal(qCode, '{qty: {$in: qty}}');
+
+    code = esprima.parseScript('db.test.find({ qty: { $nin: [ 5, 15 ] } })');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    qCode = parameterParser.parseQueryParameters(expression.arguments[0]);
+    assert.equal(qCode, '{qty: {$nin: qty}}');
   });
 });

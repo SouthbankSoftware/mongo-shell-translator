@@ -1,15 +1,21 @@
 const esprima = require('esprima');
 
 const getParameterNumber = (arg, num = 0) => {
-  arg && arg.properties.forEach((property) => {
+  arg && arg.properties && arg.properties.forEach((property) => {
     if (property.value.type === esprima.Syntax.Literal) {
       num += 1;
     } else if (property.value.type === esprima.Syntax.ObjectExpression) {
       num = getParameterNumber(property.value, num);
     } else if (property.value.type === esprima.Syntax.ArrayExpression) {
-      property.value.elements.forEach((element) => {
-        num = getParameterNumber(element, num);
-      });
+      for (let i = 0; i < property.value.elements.length; i += 1) {
+        const element = property.value.elements[i];
+        if (element.type !== esprima.Syntax.Literal) {
+          num = getParameterNumber(element, num);
+        } else {
+          num += 1;
+          break;
+        }
+      }
     }
   });
   return num;
@@ -46,14 +52,30 @@ const parseObjectExpressionArgument = (arg, many = false, parentKey = '') => {
     } else if (property.value.type === esprima.Syntax.ObjectExpression) {
       queryObject += `${keyName}: ${parseObjectExpressionArgument(property.value, many, keyName)}`;
     } else if (property.value.type === esprima.Syntax.ArrayExpression) {
-      queryObject += `${keyName}: [`;
-      property.value.elements.forEach((element, j) => {
-        queryObject += `${parseObjectExpressionArgument(element, many, keyName)}`;
-        if (j < property.value.elements.length - 1) {
-          queryObject += ',';
+      let simpleArrayElement = false;
+      for (let j = 0; j < property.value.elements.length; j += 1) {
+        if (property.value.elements[j].type === esprima.Syntax.Literal) {
+          simpleArrayElement = true;
+          break;
         }
-      });
-      queryObject += ']';
+      }
+      if (simpleArrayElement) {
+        if (many) {
+          queryObject += `${keyName}: : q.${keyValue}`;
+        } else {
+          queryObject += `${keyName}: ${keyValue}`;
+        }
+      } else {
+        queryObject += `${keyName}: [`;
+
+        property.value.elements.forEach((element, j) => {
+          queryObject += `${parseObjectExpressionArgument(element, many, keyName)}`;
+          if (j < property.value.elements.length - 1) {
+            queryObject += ',';
+          }
+        });
+        queryObject += ']';
+      }
     }
     if (i < arg.properties.length - 1) {
       queryObject += ',';
