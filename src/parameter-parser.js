@@ -11,17 +11,30 @@ const getParameterNumber = (arg, num = 0) => {
   return num;
 };
 
-const parseObjectExpressionArgument = (arg, many = false) => {
+const parseObjectExpressionArgument = (arg, many = false, parentKey = '') => {
   let queryObject = '{';
   arg.properties.forEach((property, i) => {
+    let keyValue = '';
+    let keyName = '';
+    if (property.key.type === esprima.Syntax.Identifier) {
+      keyValue = property.key.name;
+      keyName = property.key.name;
+    } else if (property.key.type === esprima.Syntax.Literal) {
+      keyValue = property.key.value;
+      keyName = property.key.raw;
+    }
+    if (keyName === '$eq' || keyName === '$gt' || keyName === '$gte' || keyName === '$in' ||
+      keyName === '$lt' || keyName === '$lte' || keyName === '$ne' || keyName === '$nin') {
+      keyValue = parentKey;
+    }
     if (property.value.type === esprima.Syntax.Literal) {
       if (many) {
-        queryObject += `${property.key.raw}: q.${property.key.value}`;
+        queryObject += `${keyName}: q.${keyValue}`;
       } else {
-        queryObject += `${property.key.raw}: ${property.key.value}`;
+        queryObject += `${keyName}: ${keyValue}`;
       }
     } else if (property.value.type === esprima.Syntax.ObjectExpression) {
-      queryObject += `${property.key.raw}: ${parseObjectExpressionArgument(property.value, many)}`;
+      queryObject += `${keyName}: ${parseObjectExpressionArgument(property.value, many, keyName)}`;
     }
     if (i < arg.properties.length - 1) {
       queryObject += ',';
