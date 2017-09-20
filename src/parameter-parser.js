@@ -102,4 +102,34 @@ const parseQueryManyParameters = (arg) => {
   return queryObject;
 };
 
-module.exports = { parseQueryParameters, getParameterNumber, parseQueryManyParameters };
+const getJsonObjectFromObjectException = (objExpression) => {
+  const json = {};
+  if (objExpression.type === esprima.Syntax.ObjectExpression) {
+    const props = objExpression.properties;
+    props.forEach((prop) => {
+      if (prop.type === esprima.Syntax.Property) {
+        if (prop.value.type === esprima.Syntax.ObjectExpression) {
+          json[prop.key.value] = getJsonObjectFromObjectException(prop.value);
+        } else if (prop.value.type === esprima.Syntax.ArrayExpression) {
+          let arrayData = '[';
+          prop.value.elements.forEach((element) => {
+            arrayData += getJsonObjectFromObjectException(element);
+          });
+          arrayData += ']';
+          json[prop.key.value] = arrayData;
+        } else {
+          json[prop.key.value] = prop.value.value;
+        }
+      }
+    });
+  } else if (objExpression.type === esprima.Syntax.Identifier) {
+    return objExpression.name;
+  }
+  return json;
+};
+module.exports = {
+  parseQueryParameters,
+  getParameterNumber,
+  parseQueryManyParameters,
+  getJsonObjectFromObjectException,
+};

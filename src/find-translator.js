@@ -31,6 +31,7 @@ const createParameterizedFunction = (statement, findExpression) => {
       queryCmd += `const query = ${queryObject}`;
     }
   }
+  let projections;
   if (args.length > 1) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'fields' });
   }
@@ -50,6 +51,7 @@ const createParameterizedFunction = (statement, findExpression) => {
   if (queryCmd) {
     functionStatement.body.body.push(esprima.parseScript(queryCmd).body[0]);
   }
+
   return functionStatement;
 };
 
