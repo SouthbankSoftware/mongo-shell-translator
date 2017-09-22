@@ -261,6 +261,10 @@ const addCallbackOnStatement = (node, syntax, toArray = true, error = true, appe
   }
 };
 
+/**
+ * find all supported mongodb statements for example: find, insert, update, delete, aggregate
+ * @param {*} statement
+ */
 const findSupportedStatement = (statement) => {
   let root = null;
   let expression = null;
@@ -294,6 +298,14 @@ const findSupportedStatement = (statement) => {
   return null;
 };
 
+/**
+ * create a promise statement expression and assign it to returnData:
+ *  `returnData = new Promise`
+ */
+const getPromiseStatement = () => {
+  return esprima.parseScript('const returnData = new Promise((resolve) => {})');
+};
+
 module.exports = {
   getAwaitStatement,
   findDbName,
@@ -305,4 +317,5 @@ module.exports = {
   addNodeArguments,
   findCollectionName,
   findSupportedStatement,
+  getPromiseStatement,
 };

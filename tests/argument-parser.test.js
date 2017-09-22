@@ -186,5 +186,9 @@ describe('argument parser test suite', () => {
     code = esprima.parseScript('db.test.find({name: true})');
     json = parameterParser.getJsonObjectFromObjectException(code.body[0].expression.arguments[0]);
     assert.equal(json.name, true);
+
+    // code = esprima.parseScript('db.test.find({name: {a: a}})');
+    // json = parameterParser.getJsonObjectFromObjectException(code.body[0].expression.arguments[0]);
+    // assert.equal(json, 'a');
   });
 });

@@ -31,26 +31,49 @@ const createParameterizedFunction = (statement, findExpression) => {
       queryCmd += `const query = ${queryObject}`;
     }
   }
-  let projections;
-  if (args.length > 1) {
+  let projections = '';
+  if (args.length > 1 && queryCmd) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'fields' });
+    projections = escodegen.generate(args[1]);
   }
+  let limit;
   if (args.lenght > 2) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'limit' });
+    limit = escodegen.generate(args[2]);
   }
+  let skip;
   if (args.lenght > 3) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'skip' });
+    skip = escodegen.generate(args[2]);
   }
+  let batchSize;
   if (args.lenght > 4) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'batchSize' });
-  }
-  if (args.lenght > 5) {
-    functionParams.push({ type: esprima.Syntax.Identifier, name: 'options' });
+    batchSize = escodegen.generate(args[2]);
   }
   const functionStatement = template.buildFunctionTemplate(`${collection}Find`, functionParams);
+  const prom = translator.getPromiseStatement();
   if (queryCmd) {
+    const body = prom.body[0].declarations[0].init.arguments[0].body.body;
     functionStatement.body.body.push(esprima.parseScript(queryCmd).body[0]);
+    let queryStatement = `db.collection('${collection}').find(query)`;
+    if (projections) {
+      queryStatement += `.project(${projections})`;
+    }
+    if (limit) {
+      queryStatement += `.limit(${limit})`;
+    }
+    if (skip) {
+      queryStatement += `.skip(${skip})`;
+    }
+    if (batchSize) {
+      queryStatement += `.batchSize(${batchSize})`;
+    }
+    queryStatement += '.toArray()';
+    body.push(esprima.parseScript(queryStatement));
   }
+
+  functionStatement.body.body.push(prom);
 
   return functionStatement;
 };

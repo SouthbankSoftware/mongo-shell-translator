@@ -27,6 +27,7 @@
     "react/jsx-no-bind": "off",
     "no-case-declarations": "off",
     "no-multi-str": "off",
-    "no-unused-expressions": "off"
+    "no-unused-expressions": "off",
+    "max-len": "off"
   }
 }
