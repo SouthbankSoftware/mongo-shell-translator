@@ -4,6 +4,7 @@ const template = require('./template-ast');
 const esprima = require('esprima');
 const escodegen = require('escodegen');
 const parameterParser = require('./parameter-parser');
+const _ = require('lodash');
 
 /**
  * return an array of json object include ast expressions.
@@ -48,6 +49,7 @@ const createParameterizedFunction = (statement, findExpression, params) => {
   const collection = translator.findCollectionName(statement);
   const args = findExpression.arguments;
   const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
+  const expParams = getJsonExpression(params);
   let queryCmd = '';
   if (args.length > 0) {
     const pNum = parameterParser.getParameterNumber(args[0]);
@@ -64,28 +66,45 @@ const createParameterizedFunction = (statement, findExpression, params) => {
     queryCmd = 'const query = {}';
   }
   let projections = '';
-  if (args.length > 1 && queryCmd) {
+  if (args.length > 1) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'fields' });
     projections = escodegen.generate(args[1]);
   }
   let limit;
-  if (args.lenght > 2) {
+  const limitParam = _.find(expParams, { name: 'limit' });
+  if (limitParam) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'limit' });
-    limit = escodegen.generate(args[2]);
+    limit = limitParam.parameters;
+  } else if (args.length > 2) {
+    if (args[2].type === esprima.Syntax.Literal) {
+      functionParams.push({ type: esprima.Syntax.Identifier, name: 'limit' });
+      limit = args[2].value;
+    }
   }
   let skip;
-  if (args.lenght > 3) {
+  const skipParam = _.find(expParams, { name: 'skip' });
+  if (skipParam) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'skip' });
-    skip = escodegen.generate(args[2]);
+    skip = skipParam.parameters;
+  } else if (args.length > 3) {
+    if (args[3].type === esprima.Syntax.Literal) {
+      functionParams.push({ type: esprima.Syntax.Identifier, name: 'skip' });
+      skip = args[3].value;
+    }
   }
   let batchSize;
-  if (args.lenght > 4) {
+  const batchSizeParam = _.find(expParams, { name: 'batchSize' });
+  if (batchSizeParam) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'batchSize' });
-    batchSize = escodegen.generate(args[2]);
+    batchSize = batchSizeParam.parameters;
+  } else if (args.length > 4) {
+    if (args[4].type === esprima.Syntax.Literal) {
+      functionParams.push({ type: esprima.Syntax.Identifier, name: 'batchSize' });
+      batchSize = args[4].value;
+    }
   }
   const functionStatement = template.buildFunctionTemplate(`${collection}Find`, functionParams);
   const prom = translator.getPromiseStatement('returnData');
-  // if (queryCmd) {
   const body = prom.body[0].declarations[0].init.arguments[0].body.body;
   queryCmd && functionStatement.body.body.push(esprima.parseScript(queryCmd).body[0]);
   let queryStatement = `${db}.collection('${collection}').find(query)`;
