@@ -47,16 +47,24 @@ const getJsonExpression = (params) => {
 const createParameterizedFunction = (statement, findExpression, params) => {
   const db = translator.findDbName(statement);
   const collection = translator.findCollectionName(statement);
+  const functionName = `${collection}Find`;
   const args = findExpression.arguments;
   const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
   const expParams = getJsonExpression(params);
   let queryCmd = '';
+  let callFunctionParams = '';
   if (args.length > 0) {
     const pNum = parameterParser.getParameterNumber(args[0]);
     if (pNum <= 4) {
       const { queryObject, parameters } = parameterParser.parseQueryParameters(args[0]);
       queryCmd += `const query = ${queryObject}`;
-      parameters.forEach(p => functionParams.push({ type: esprima.Syntax.Identifier, name: p }));
+      parameters.forEach((p, i) => {
+        functionParams.push({ type: esprima.Syntax.Identifier, name: p.name });
+        callFunctionParams += p.value;
+        if (i !== parameters.length - 1) {
+          callFunctionParams += ',';
+        }
+      });
     } else {
       functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
       const { queryObject } = parameterParser.parseQueryManyParameters(args[0]);
@@ -103,7 +111,7 @@ const createParameterizedFunction = (statement, findExpression, params) => {
       batchSize = args[4].value;
     }
   }
-  const functionStatement = template.buildFunctionTemplate(`${collection}Find`, functionParams);
+  const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
   const prom = translator.getPromiseStatement('returnData');
   const body = prom.body[0].declarations[0].init.arguments[0].body.body;
   queryCmd && functionStatement.body.body.push(esprima.parseScript(queryCmd).body[0]);
@@ -125,7 +133,11 @@ const createParameterizedFunction = (statement, findExpression, params) => {
   body.push(esprima.parseScript('resolve(returnData)'));
   functionStatement.body.body.push(prom);
   functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
-  return functionStatement;
+  let callStatement = '';
+  if (callFunctionParams) {
+    callStatement = esprima.parseScript(`${functionName}(${callFunctionParams})`);
+  }
+  return { functionStatement, functionName, callStatement };
 };
 
 const createCollectionStatement = (node, dbName, colName) => {

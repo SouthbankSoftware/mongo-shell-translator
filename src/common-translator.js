@@ -301,7 +301,7 @@ const findSupportedStatement = (statement) => {
       break;
     }
   } while (root);
-  return null;
+  return {};
 };
 
 /**

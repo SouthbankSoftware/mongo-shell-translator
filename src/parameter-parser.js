@@ -1,4 +1,5 @@
 const esprima = require('esprima');
+const escodegen = require('escodegen');
 
 const findOperators = ['$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin', '$and', '$not', '$nor', '$or', '$exists', '$type', '$mod', '$regex', '$text', '$where', '$geoIntersects', '$geoWithin', '$near', '$nearSphere', '$all', '$elemMatch', '$size', '$bitsAllClear', '$bitsAllSet', '$bitsAnyClear', '$bitsAnySet', '$comment', '$meta', '$slice'];
 
@@ -46,7 +47,7 @@ const parseObjectExpressionArgument = (arg, many = false, parentKey = '', parame
         queryObject += `${keyName}: q.${keyValue}`;
       } else {
         queryObject += `${keyName}: ${keyValue}`;
-      }!ignoreKey && parameters.push(keyValue);
+      }!ignoreKey && parameters.push({ name: keyName, value: property.value.raw });
     } else if (property.value.type === esprima.Syntax.ObjectExpression) {
       queryObject += `${keyName}: ${parseObjectExpressionArgument(property.value, many, keyName, parameters)}`;
     } else if (property.value.type === esprima.Syntax.ArrayExpression) {
@@ -62,11 +63,10 @@ const parseObjectExpressionArgument = (arg, many = false, parentKey = '', parame
           queryObject += `${keyName}: q.${keyValue}`;
         } else {
           queryObject += `${keyName}: ${keyValue}`;
-        }!ignoreKey && parameters.push(keyValue);
+        }!ignoreKey && parameters.push({ name: keyName, value: escodegen.generate(property.value) });
       } else {
-        !ignoreKey && parameters.push(keyValue);
+        !ignoreKey && parameters.push({ name: keyName, value: escodegen.generate(property.value) });
         queryObject += `${keyName}: [`;
-
         property.value.elements.forEach((element, j) => {
           queryObject += `${parseObjectExpressionArgument(element, many, keyName, parameters)}`;
           if (j < property.value.elements.length - 1) {

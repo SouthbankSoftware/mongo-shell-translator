@@ -38,7 +38,6 @@ class MongoShellTranslator {
   translate(shell) {
     let ast = esprima.parseScript(shell, parseOptions);
     ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
-    console.log('ast =', ast);
     const statements = ast.body;
     const newAst = { type: 'Program', body: [] };
     statements.forEach((statement) => {
@@ -46,8 +45,11 @@ class MongoShellTranslator {
       if (name) {
         const translator = translators[name];
         if (translator) {
-          const tran = translator.createParameterizedFunction(statement, expression, params);
-          newAst.body.push(tran);
+          const { functionStatement, callStatement } = translator.createParameterizedFunction(statement, expression, params);
+          newAst.body.push(functionStatement);
+          if (callStatement) {
+            newAst.body.push(callStatement);
+          }
         }
       } else {
         newAst.body.push(statement);
