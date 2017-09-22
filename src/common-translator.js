@@ -263,10 +263,14 @@ const addCallbackOnStatement = (node, syntax, toArray = true, error = true, appe
 
 /**
  * find all supported mongodb statements for example: find, insert, update, delete, aggregate
+ *
  * @param {*} statement
+ * @return {name, expression, params} name is the function name such as find, insert, etc.
+ *                                    expression is the full statement expression such as: db.test.find({...})
+ *                                    params is the parameters after the expression, for the input db.test.find().limit(10).skip(100), it will return an array of ast including `limit(10)`, `skip(100)`
  */
 const findSupportedStatement = (statement) => {
-  let root = null;
+  let root = null; // the callee expression
   let expression = null;
   if (statement.type === esprima.Syntax.ExpressionStatement) {
     if (statement.expression.type === esprima.Syntax.AssignmentExpression) {
@@ -280,14 +284,16 @@ const findSupportedStatement = (statement) => {
     root = statement.declarations[0].init.callee;
     expression = statement.declarations[0].init;
   }
+  const params = [];
   do {
     if (root && root.type === esprima.Syntax.MemberExpression &&
       root.property.type === esprima.Syntax.Identifier) {
       const name = root.property.name;
       if (Object.values(commandName).indexOf(name) > -1) {
-        return { name, expression };
+        return { name, expression, params };
       }
       if (root.object && root.object.type === esprima.Syntax.CallExpression) {
+        params.push(expression);
         expression = root.object;
         root = root.object.callee;
       }

@@ -42,11 +42,11 @@ class MongoShellTranslator {
     const statements = ast.body;
     const newAst = { type: 'Program', body: [] };
     statements.forEach((statement) => {
-      const { name, expression } = commonTranslator.findSupportedStatement(statement);
+      const { name, expression, params } = commonTranslator.findSupportedStatement(statement);
       if (name) {
         const translator = translators[name];
         if (translator) {
-          const tran = translator.createParameterizedFunction(statement, expression);
+          const tran = translator.createParameterizedFunction(statement, expression, params);
           newAst.body.push(tran);
         }
       } else {

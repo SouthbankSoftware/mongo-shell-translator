@@ -6,12 +6,44 @@ const escodegen = require('escodegen');
 const parameterParser = require('./parameter-parser');
 
 /**
+ * return an array of json object include ast expressions.
+ *
+ * @param {*} params an array include ast expression such as limit(10), skip(100), etc.
+ */
+const getJsonExpression = (params) => {
+  return params.map((p) => {
+    if (p.type === esprima.Syntax.CallExpression && p.callee.type === esprima.Syntax.MemberExpression) {
+      const name = p.callee.property.name;
+      if (p.arguments) {
+        const parameters = p.arguments.map((argument) => {
+          if (argument.type === esprima.Syntax.Literal) {
+            return argument.value;
+          } else if (argument.type === esprima.Syntax.ObjectExpression) {
+            return escodegen.generate(argument);
+          }
+          return {};
+        });
+        if (parameters) {
+          if (parameters.length === 1) {
+            return { name, parameters: parameters[0] };
+          }
+          return { name, parameters };
+        }
+      }
+      return { name, parameters: {} };
+    }
+    return {};
+  });
+};
+
+/**
  * create parameterized function
  *
  * @param {*} statement
  * @param {*} findExpression the find expression inside the statement
+ * @param {*} params an array include ast expression such as limit(10), skip(100), etc.
  */
-const createParameterizedFunction = (statement, findExpression) => {
+const createParameterizedFunction = (statement, findExpression, params) => {
   const db = translator.findDbName(statement);
   const collection = translator.findCollectionName(statement);
   const args = findExpression.arguments;
@@ -72,7 +104,6 @@ const createParameterizedFunction = (statement, findExpression) => {
   queryStatement += '.toArray()';
   body.push(esprima.parseScript(queryStatement));
   body.push(esprima.parseScript('resolve(returnData)'));
-  // }
   functionStatement.body.body.push(prom);
   functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
   return functionStatement;
@@ -86,4 +117,5 @@ const createCollectionStatement = (node, dbName, colName) => {
 module.exports = {
   createCollectionStatement,
   createParameterizedFunction,
+  getJsonExpression,
 };

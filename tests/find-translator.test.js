@@ -2,13 +2,33 @@ const assert = require('assert');
 const MongoShellTranslator = require('../src/mongo-shell-translator').MongoShellTranslator;
 const options = require('../src/options');
 const utils = require('./utils');
-const createParameterizedFunction = require('../src/find-translator.js').createParameterizedFunction;
+const findTranslator = require('../src/find-translator.js');
+const commonTranslator = require('../src/common-translator');
+const esprima = require('esprima');
 
 describe('test find translator', () => {
-  it('test translate find command with callback', () => {
-    const translator = new MongoShellTranslator();
-    const query = '';
-    const driverCode = translator.translate('db.test.find()');
-    utils.assertStatementEqual(driverCode, 'db.collection(\'test\').find().toArray(function (err, docs) {\n});');
+  it('test get json expression of find command', () => {
+    let ast = esprima.parseScript('db.test.find()');
+    let { params } = commonTranslator.findSupportedStatement(ast.body[0]);
+    let exp = findTranslator.getJsonExpression(params);
+    assert.equal(exp.length, 0);
+
+    ast = esprima.parseScript('db.test.find().skip(100)');
+    params = commonTranslator.findSupportedStatement(ast.body[0]).params;
+    exp = findTranslator.getJsonExpression(params);
+    assert.equal(exp.length, 1);
+    assert.equal(exp[0].name, 'skip');
+    assert.equal(exp[0].parameters, 100);
+
+    ast = esprima.parseScript('db.test.find().skip(100).limit(1000).sort({a:true})');
+    params = commonTranslator.findSupportedStatement(ast.body[0]).params;
+    exp = findTranslator.getJsonExpression(params);
+    assert.equal(exp.length, 3);
+    assert.equal(exp[2].name, 'skip');
+    assert.equal(exp[2].parameters, 100);
+    assert.equal(exp[1].name, 'limit');
+    assert.equal(exp[1].parameters, 1000);
+    assert.equal(exp[0].name, 'sort');
+    assert.equal(exp[0].parameters, '{ a: true }');
   });
 });
