@@ -302,8 +302,8 @@ const findSupportedStatement = (statement) => {
  * create a promise statement expression and assign it to returnData:
  *  `returnData = new Promise`
  */
-const getPromiseStatement = () => {
-  return esprima.parseScript('const returnData = new Promise((resolve) => {})');
+const getPromiseStatement = (returnData = 'returnData') => {
+  return esprima.parseScript(`const ${returnData} = new Promise((resolve) => {})`);
 };
 
 module.exports = {

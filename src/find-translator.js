@@ -5,8 +5,6 @@ const esprima = require('esprima');
 const escodegen = require('escodegen');
 const parameterParser = require('./parameter-parser');
 
-const findOperators = ['$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin', '$and', '$not', '$nor', '$or', '$exists', '$type', '$mod', '$regex', '$text', '$where', '$geoIntersects', '$geoWithin', '$near', '$nearSphere', '$all', '$elemMatch', '$size', '$bitsAllClear', '$bitsAllSet', '$bitsAnyClear', '$bitsAnySet', '$comment', '$meta', '$slice'];
-
 /**
  * create parameterized function
  *
@@ -52,11 +50,11 @@ const createParameterizedFunction = (statement, findExpression) => {
     batchSize = escodegen.generate(args[2]);
   }
   const functionStatement = template.buildFunctionTemplate(`${collection}Find`, functionParams);
-  const prom = translator.getPromiseStatement();
+  const prom = translator.getPromiseStatement('returnData');
   if (queryCmd) {
     const body = prom.body[0].declarations[0].init.arguments[0].body.body;
     functionStatement.body.body.push(esprima.parseScript(queryCmd).body[0]);
-    let queryStatement = `db.collection('${collection}').find(query)`;
+    let queryStatement = `${db}.collection('${collection}').find(query)`;
     if (projections) {
       queryStatement += `.project(${projections})`;
     }
@@ -71,6 +69,7 @@ const createParameterizedFunction = (statement, findExpression) => {
     }
     queryStatement += '.toArray()';
     body.push(esprima.parseScript(queryStatement));
+    body.push(esprima.parseScript('resolve(returnData)'));
   }
 
   functionStatement.body.body.push(prom);
