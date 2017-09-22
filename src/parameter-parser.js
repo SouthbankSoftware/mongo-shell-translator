@@ -113,48 +113,8 @@ const parseQueryManyParameters = (arg) => {
   return { queryObject, parameters };
 };
 
-const getJsonObjectFromObjectException = (objExpression) => {
-  const json = {};
-  if (objExpression.type === esprima.Syntax.ObjectExpression) {
-    const props = objExpression.properties;
-    props.forEach((prop) => {
-      if (prop.type === esprima.Syntax.Property) {
-        if (prop.value.type === esprima.Syntax.ObjectExpression) {
-          json[prop.key.value] = getJsonObjectFromObjectException(prop.value);
-        } else if (prop.value.type === esprima.Syntax.ArrayExpression) {
-          let arrayData = '[';
-          prop.value.elements.forEach((element) => {
-            arrayData += getJsonObjectFromObjectException(element);
-          });
-          arrayData += ']';
-          json[prop.key.value] = arrayData;
-        } else {
-          if (prop.key.type === esprima.Syntax.Identifier) {
-            json[prop.key.name] = prop.value.value;
-          }
-          if (prop.key.type === esprima.Syntax.Literal) {
-            json[prop.key.value] = prop.value.value;
-          }
-        }
-      }
-    });
-  } else if (objExpression.type === esprima.Syntax.Identifier) {
-    return objExpression.name;
-  } else if (objExpression.type === esprima.Syntax.Literal) {
-    return objExpression.value;
-  } else if (objExpression.type === esprima.Syntax.Property) {
-    if (objExpression.key.type === esprima.Syntax.Identifier) {
-      json[objExpression.key.name] = getJsonObjectFromObjectException(objExpression.value);
-    } else if (objExpression.key.type === esprima.Syntax.Literal) {
-      json[objExpression.key.value] = getJsonObjectFromObjectException(objExpression.value);
-    }
-  }
-  return json;
-};
-
 module.exports = {
   parseQueryParameters,
   getParameterNumber,
   parseQueryManyParameters,
-  getJsonObjectFromObjectException,
 };

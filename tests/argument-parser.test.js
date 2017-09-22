@@ -269,18 +269,4 @@ describe('argument parser test suite', () => {
     qCode = parseRet.queryObject;
     assert.equal(qCode, '{qty: {$nin: q.qty}}');
   });
-
-  it('test parse json paramter', () => {
-    let code = esprima.parseScript('db.test.find({"name": true})');
-    let json = parameterParser.getJsonObjectFromObjectException(code.body[0].expression.arguments[0]);
-    assert.equal(json.name, true);
-
-    code = esprima.parseScript('db.test.find({name: true})');
-    json = parameterParser.getJsonObjectFromObjectException(code.body[0].expression.arguments[0]);
-    assert.equal(json.name, true);
-
-    // code = esprima.parseScript('db.test.find({name: {a: a}})');
-    // json = parameterParser.getJsonObjectFromObjectException(code.body[0].expression.arguments[0]);
-    // assert.equal(json, 'a');
-  });
 });
