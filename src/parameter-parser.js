@@ -47,7 +47,7 @@ const parseObjectExpressionArgument = (arg, many = false, parentKey = '', parame
         queryObject += `${keyName}: q.${keyValue}`;
       } else {
         queryObject += `${keyName}: ${keyValue}`;
-      }!ignoreKey && parameters.push({ name: keyName, value: property.value.raw });
+      }!ignoreKey && parameters.push({ name: keyValue, value: property.value.raw });
     } else if (property.value.type === esprima.Syntax.ObjectExpression) {
       queryObject += `${keyName}: ${parseObjectExpressionArgument(property.value, many, keyName, parameters)}`;
     } else if (property.value.type === esprima.Syntax.ArrayExpression) {
@@ -63,9 +63,9 @@ const parseObjectExpressionArgument = (arg, many = false, parentKey = '', parame
           queryObject += `${keyName}: q.${keyValue}`;
         } else {
           queryObject += `${keyName}: ${keyValue}`;
-        }!ignoreKey && parameters.push({ name: keyName, value: escodegen.generate(property.value) });
+        }!ignoreKey && parameters.push({ name: keyValue, value: escodegen.generate(property.value) });
       } else {
-        !ignoreKey && parameters.push({ name: keyName, value: escodegen.generate(property.value) });
+        !ignoreKey && parameters.push({ name: keyValue, value: escodegen.generate(property.value) });
         queryObject += `${keyName}: [`;
         property.value.elements.forEach((element, j) => {
           queryObject += `${parseObjectExpressionArgument(element, many, keyName, parameters)}`;
