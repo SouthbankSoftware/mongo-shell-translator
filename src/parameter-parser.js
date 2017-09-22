@@ -38,7 +38,7 @@ const parseObjectExpressionArgument = (arg, many = false, parentKey = '', parame
       keyName = property.key.raw;
     }
     const ignoreKey = ['$and'].indexOf(keyName) >= 0;
-    if (keyName === '$eq' || keyName === '$gt' || keyName === '$gte' || keyName === '$in' ||
+    if (keyName === '$eq' || keyName === '$gt' || keyName === '$gte' || keyName === '$in' || keyName === '$exists' ||
       keyName === '$lt' || keyName === '$lte' || keyName === '$ne' || keyName === '$nin') {
       keyValue = parentKey;
     }
