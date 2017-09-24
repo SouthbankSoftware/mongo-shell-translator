@@ -31,4 +31,14 @@ describe('test find translator', () => {
     assert.equal(exp[0].name, 'sort');
     assert.equal(exp[0].parameters, '{ a: true }');
   });
+
+  it('find translator empty statement ', () => {
+    const ast = esprima.parseScript('db.test.find()');
+    const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('find', name);
+    const { functionStatement, functionName, callStatement } = findTranslator.createParameterizedFunction(ast.body[0], expression, params);
+    assert.equal(callStatement.body.length, 1);
+    assert.equal(functionName, 'testFind');
+    assert.equal(functionStatement.id.name, 'testFind');
+  });
 });
