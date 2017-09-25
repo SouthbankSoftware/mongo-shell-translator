@@ -2,6 +2,7 @@ const translator = require('./common-translator');
 const esprima = require('esprima');
 const parameterParser = require('./parameter-parser');
 const template = require('./template-ast');
+const escodegen = require('escodegen');
 
 const getFunctionName = (options) => {
   let functionName = 'UpdateOne';
@@ -14,9 +15,17 @@ const getFunctionName = (options) => {
   return functionName;
 };
 
-const createPromise = () => {
+const createPromise = (db, collection, functionName, options) => {
   const prom = translator.getPromiseStatement('returnData');
   const body = prom.body[0].declarations[0].init.arguments[0].body.body;
+  let queryStatement;
+  if (!options) {
+    queryStatement = `${db}.collection('${collection}').${functionName}(query, update)`;
+  } else {
+    queryStatement = `${db}.collection('${collection}').${functionName}(query, update, options)`;
+  }
+  body.push(esprima.parseScript(queryStatement));
+  body.push(esprima.parseScript('resolve(returnData)'));
   return prom;
 };
 
@@ -31,7 +40,7 @@ const createParameterizedFunction = (statement, updateExpression) => {
   const collection = translator.findCollectionName(statement);
   const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
   const args = updateExpression.arguments;
-  const options = args.length > 2 ? args[2] : {};
+  const options = args.length > 2 ? args[2] : null;
   const functionName = `${collection}${getFunctionName(options)}`;
   let updateCmd = '';
   let callFunctionParams = ''; // the parameters we need to put on calling the generated function
@@ -66,12 +75,15 @@ const createParameterizedFunction = (statement, updateExpression) => {
   } else {
     updateCmd = 'const query = {}';
   }
+  if (options) {
+    functionParams.push({ type: esprima.Syntax.Identifier, name: 'options' });
+    callFunctionParams += `, ${escodegen.generate(options)}`;
+  }
   const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
   if (updateCmd) {
     functionStatement.body.body = functionStatement.body.body.concat(esprima.parseScript(updateCmd).body);
   }
-  functionStatement.body.body.push(createPromise());
-  console.log('callFunctionParams', callFunctionParams);
+  functionStatement.body.body.push(createPromise(db, collection, functionName, options, options));
   const callStatement = esprima.parseScript(`${functionName}(${callFunctionParams})`);
   return { functionStatement, functionName, callStatement };
 };
