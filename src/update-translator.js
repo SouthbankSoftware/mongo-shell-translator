@@ -41,7 +41,8 @@ const createParameterizedFunction = (statement, updateExpression, params, contex
   const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
   const args = updateExpression.arguments;
   const options = args.length > 2 ? args[2] : null;
-  let functionName = `${collection}${getFunctionName(options)}`;
+  const driverFunctionName = getFunctionName(options);
+  let functionName = `${collection}${driverFunctionName}`;
   functionName = context.getFunctionName(functionName);
   let updateCmd = '';
   let callFunctionParams = ''; // the parameters we need to put on calling the generated function
@@ -81,10 +82,20 @@ const createParameterizedFunction = (statement, updateExpression, params, contex
     callFunctionParams += `, ${escodegen.generate(options)}`;
   }
   const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
+  if (context.currentDB) {
+    functionStatement.body.body.push(esprima.parseScript(`const useDb = db.db("${context.currentDB}")`).body[0]);
+  } else {
+    functionStatement.body.body.push(esprima.parseScript('const useDb = db').body[0]);
+  }
   if (updateCmd) {
     functionStatement.body.body = functionStatement.body.body.concat(esprima.parseScript(updateCmd).body);
   }
-  functionStatement.body.body.push(createPromise(db, collection, functionName, options, options));
+  functionStatement.body.body.push(createPromise('useDb', collection, driverFunctionName, options));
+  if (callFunctionParams) {
+    callFunctionParams = `${db}, ${callFunctionParams}`;
+  } else {
+    callFunctionParams = `${db}`;
+  }
   const callStatement = esprima.parseScript(`${functionName}(${callFunctionParams})`);
   return { functionStatement, functionName, callStatement };
 };

@@ -114,8 +114,13 @@ const createParameterizedFunction = (statement, findExpression, params, context)
   const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
   const prom = translator.getPromiseStatement('returnData');
   const body = prom.body[0].declarations[0].init.arguments[0].body.body;
+  if (context.currentDB) {
+    functionStatement.body.body.push(esprima.parseScript(`const useDb = db.db("${context.currentDB}")`).body[0]);
+  } else {
+    functionStatement.body.body.push(esprima.parseScript('const useDb = db').body[0]);
+  }
   queryCmd && functionStatement.body.body.push(esprima.parseScript(queryCmd).body[0]);
-  let queryStatement = `${db}.collection('${collection}').find(query)`;
+  let queryStatement = `useDb.collection('${collection}').find(query)`;
   if (projections) {
     queryStatement += `.project(${projections})`;
   }
@@ -133,6 +138,11 @@ const createParameterizedFunction = (statement, findExpression, params, context)
   body.push(esprima.parseScript('resolve(returnData)'));
   functionStatement.body.body.push(prom);
   functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
+  if (callFunctionParams) {
+    callFunctionParams = `${db}, ${callFunctionParams}`;
+  } else {
+    callFunctionParams = `${db}`;
+  }
   const callStatement = esprima.parseScript(`${functionName}(${callFunctionParams})`);
   return { functionStatement, functionName, callStatement };
 };
