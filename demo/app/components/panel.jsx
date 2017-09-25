@@ -14,7 +14,8 @@ export default class Panel extends React.Component {
     this.state = {
       shell: 'db.test.find({"name":"joey"}, {_id: 0}, 10, 100, 1000) \ndb.test.find() \n'
         + 'var i = db.test.find().toArray() \n'
-        + 'i = db.test.find()\n',
+        + 'i = db.test.find()\n'
+        + 'db.test.update({"name":"joey"}, {"name":"mike"}, {multi: true})',
       translate: '',
       syntax: syntaxType.callback,
     };

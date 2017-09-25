@@ -133,10 +133,7 @@ const createParameterizedFunction = (statement, findExpression, params) => {
   body.push(esprima.parseScript('resolve(returnData)'));
   functionStatement.body.body.push(prom);
   functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
-  let callStatement = '';
-  // if (callFunctionParams) {
-  callStatement = esprima.parseScript(`${functionName}(${callFunctionParams})`);
-  // }
+  const callStatement = esprima.parseScript(`${functionName}(${callFunctionParams})`);
   return { functionStatement, functionName, callStatement };
 };
 

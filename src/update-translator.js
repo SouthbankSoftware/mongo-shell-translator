@@ -1,4 +1,75 @@
 const translator = require('./common-translator');
+const esprima = require('esprima');
+const parameterParser = require('./parameter-parser');
+const template = require('./template-ast');
+
+const getFunctionName = (options) => {
+  let functionName = 'UpdateOne';
+  options && options.properties && options.properties.forEach((property) => {
+    if (property.type === esprima.Syntax.Property && property.key.type === esprima.Syntax.Identifier &&
+      property.key.name === 'multi' && property.value.value === true) {
+      functionName = 'UpdateMany';
+    }
+  });
+  return functionName;
+};
+
+const createPromise = () => {
+  const prom = translator.getPromiseStatement('returnData');
+  const body = prom.body[0].declarations[0].init.arguments[0].body.body;
+  return prom;
+};
+
+/**
+ * create parameterized function
+ *
+ * @param {*} statement
+ * @param {*} updateExpression the update expression inside the statement
+ */
+const createParameterizedFunction = (statement, updateExpression) => {
+  const db = translator.findDbName(statement);
+  const collection = translator.findCollectionName(statement);
+  const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
+  const args = updateExpression.arguments;
+  const options = args.length > 2 ? args[2] : {};
+  const functionName = `${collection}${getFunctionName(options)}`;
+  let updateCmd = '';
+  let callFunctionParams = '';
+
+  if (args.length > 1) {
+    let pNum = 0;
+    args.slice(0, 2).forEach((arg) => {
+      pNum += parameterParser.getParameterNumber(arg);
+    });
+    if (pNum <= 4) {
+      const parseParameters = (pName, arg, end = false) => {
+        const { queryObject, parameters } = parameterParser.parseQueryParameters(arg);
+        updateCmd += `const ${pName} = ${queryObject}${translator.getSeparator()}`;
+        parameters.forEach((p, i) => {
+          functionParams.push({ type: esprima.Syntax.Identifier, name: p.name });
+          callFunctionParams += p.value;
+          if (!end || i !== parameters.length - 1) {
+            callFunctionParams += ',';
+          }
+        });
+      };
+      parseParameters('query', args[0]);
+      parseParameters('update', args[1], true);
+    } else {
+      functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
+      const { queryObject } = parameterParser.parseQueryManyParameters(args[0]);
+      updateCmd += `const query = ${queryObject}`;
+    }
+  } else {
+    updateCmd = 'const query = {}';
+  }
+  const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
+  updateCmd && functionStatement.body.body.push(esprima.parseScript(updateCmd).body[0]);
+  functionStatement.body.body.push(createPromise());
+  console.log('callFunctionParams', callFunctionParams);
+  const callStatement = esprima.parseScript(`${functionName}(${callFunctionParams})`);
+  return { functionStatement, functionName, callStatement };
+};
 
 const createCollectionStatement = (node, dbName, colName) => {
   let multi = false;
@@ -28,4 +99,5 @@ const createCollectionStatement = (node, dbName, colName) => {
 
 module.exports = {
   createCollectionStatement,
+  createParameterizedFunction,
 };

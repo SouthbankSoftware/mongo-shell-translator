@@ -2,6 +2,7 @@ const esprima = require('esprima');
 const escodegen = require('escodegen');
 const syntaxType = require('./options').syntaxType;
 const commandName = require('./options').commandName;
+const os = require('os');
 
 /**
  * create collection statement in native driver. It generates the code
@@ -296,6 +297,8 @@ const findSupportedStatement = (statement) => {
         params.push(expression);
         expression = root.object;
         root = root.object.callee;
+      } else {
+        break;
       }
     } else {
       break;
@@ -312,6 +315,13 @@ const getPromiseStatement = (returnData = 'returnData') => {
   return esprima.parseScript(`const ${returnData} = new Promise((resolve) => {})`);
 };
 
+const getSeparator = () => {
+  if (process.browser) {
+    return window.navigator.platform.toLowerCase() === 'win32' ? '\r\n' : '\n';
+  }
+  return os.platform() === 'win32' ? '\r\n' : '\n';
+};
+
 module.exports = {
   getAwaitStatement,
   findDbName,
@@ -324,4 +334,5 @@ module.exports = {
   findCollectionName,
   findSupportedStatement,
   getPromiseStatement,
+  getSeparator,
 };

@@ -91,4 +91,18 @@ describe('test common translator', () => {
     assert.equal(supported.name, 'find');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
   });
+
+  it('test update supported statement', () => {
+    let ast = esprima.parseScript('db.test.update()');
+    let supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal(supported.name, 'update');
+    assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
+    assert.equal(supported.params.length, 0);
+
+    ast = esprima.parseScript('db.test.update({}, {}, {})');
+    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal(supported.name, 'update');
+    assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
+    assert.equal(supported.expression.arguments.length, 3);
+  });
 });

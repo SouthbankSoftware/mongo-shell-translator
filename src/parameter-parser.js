@@ -49,7 +49,7 @@ const parseObjectExpressionArgument = (arg, many = false, parentKey = '', parame
         queryObject += `${keyName}: ${keyValue}`;
       }!ignoreKey && parameters.push({ name: keyValue, value: property.value.raw });
     } else if (property.value.type === esprima.Syntax.ObjectExpression) {
-      queryObject += `${keyName}: ${parseObjectExpressionArgument(property.value, many, keyName, parameters)}`;
+      queryObject += `${keyName}: ${parseObjectExpressionArgument(property.value, many, keyValue, parameters)}`;
     } else if (property.value.type === esprima.Syntax.ArrayExpression) {
       let simpleArrayElement = false;
       for (let j = 0; j < property.value.elements.length; j += 1) {
