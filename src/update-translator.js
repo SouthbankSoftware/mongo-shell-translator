@@ -34,7 +34,7 @@ const createParameterizedFunction = (statement, updateExpression) => {
   const options = args.length > 2 ? args[2] : {};
   const functionName = `${collection}${getFunctionName(options)}`;
   let updateCmd = '';
-  let callFunctionParams = '';
+  let callFunctionParams = ''; // the parameters we need to put on calling the generated function
 
   if (args.length > 1) {
     let pNum = 0;
@@ -42,11 +42,11 @@ const createParameterizedFunction = (statement, updateExpression) => {
       pNum += parameterParser.getParameterNumber(arg);
     });
     if (pNum <= 4) {
-      const parseParameters = (pName, arg, end = false) => {
-        const { queryObject, parameters } = parameterParser.parseQueryParameters(arg);
+      const parseParameters = (pName, arg, end = false, updateValue = false) => {
+        const { queryObject, parameters } = parameterParser.parseQueryParameters(arg, updateValue ? 'Updated' : '');
         updateCmd += `const ${pName} = ${queryObject}${translator.getSeparator()}`;
         parameters.forEach((p, i) => {
-          functionParams.push({ type: esprima.Syntax.Identifier, name: p.name });
+          functionParams.push({ type: esprima.Syntax.Identifier, name: updateValue ? `${p.name}Updated` : p.name });
           callFunctionParams += p.value;
           if (!end || i !== parameters.length - 1) {
             callFunctionParams += ',';
@@ -54,17 +54,22 @@ const createParameterizedFunction = (statement, updateExpression) => {
         });
       };
       parseParameters('query', args[0]);
-      parseParameters('update', args[1], true);
+      parseParameters('update', args[1], true, true);
     } else {
       functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
-      const { queryObject } = parameterParser.parseQueryManyParameters(args[0]);
-      updateCmd += `const query = ${queryObject}`;
+      functionParams.push({ type: esprima.Syntax.Identifier, name: 'u' });
+      let { queryObject } = parameterParser.parseQueryManyParameters(args[0]);
+      updateCmd += `const query = ${queryObject}${translator.getSeparator()}`;
+      queryObject = parameterParser.parseQueryManyParameters(args[1], 'Updated').queryObject;
+      updateCmd += `const update = ${queryObject}`;
     }
   } else {
     updateCmd = 'const query = {}';
   }
   const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
-  updateCmd && functionStatement.body.body.push(esprima.parseScript(updateCmd).body[0]);
+  if (updateCmd) {
+    functionStatement.body.body = functionStatement.body.body.concat(esprima.parseScript(updateCmd).body);
+  }
   functionStatement.body.body.push(createPromise());
   console.log('callFunctionParams', callFunctionParams);
   const callStatement = esprima.parseScript(`${functionName}(${callFunctionParams})`);
