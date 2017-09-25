@@ -84,34 +84,15 @@ const deleteTest = async(db) => {
   console.log(aaa);
 };
 
+function testFind(db, name, fields, limit, skip, batchSize) {
+  const useDb = db;
+  const query = { name };
+  const returnData = new Promise((resolve) => {
+    const dataArray = useDb.collection('explains').find(query).project({ _id: 0 }).limit(10).skip(100).batchSize(1000).toArray();
+    resolve(dataArray);
+  });
+  return (returnData);
+}
 MongoClient.connect(url, async(err, db) => {
-  // db.collection('explains').find({ 'user.name.last': 'Hall' }, { _id: 0 }).toArray((err, docs) => {
-  //   console.log(docs);
-  // });
-
-  // db.collection('explains').find({ 'user.name.last': 'Hall' }, { _id: 0 }).toArray().then((docs) => {
-  //   console.log(docs);
-  // });
-
-  // const docs = await db.collection('explains').find({ 'user.name.last': 'Hall' }, { _id: 0 }).toArray();
-  // db.collection('explains').aggregate([{
-  //   $project: {
-  //     'user.name.last': 1,
-  //   },
-  // }], (err, result) => {
-  //   console.log(result.length);
-  // });
-  // db.collection('explains').find().toArray().then((docs) => {
-  //   console.log(docs);
-  // });
-  // db.collection('explains').aggregate([
-  //   { $match: { $and: [{ 'tags.label': { $ne: '' } }] } },
-  //   { $sort: { 'user.age': 1 } },
-  // ]).toArray().then((docs) => {
-  //   console.log(docs);
-  // });
-  // aggregateTest(db);
-  // updateTest(db);
-  // fun(db);
-  deleteTest(db);
+  testFind(db, 'Lee').then(doc => console.log(doc));
 });

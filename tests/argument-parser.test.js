@@ -316,4 +316,26 @@ describe('argument parser test suite', () => {
     assert.equal(parameters[3].name, 'qty3');
     assert.equal(parameters[4].name, 'qty4');
   });
+
+  it('test nested parameter', () => {
+    let code = esprima.parseScript('db.test.find({"user.name.last": "joey"})');
+    let { expression } = translator.findSupportedStatement(code.body[0]);
+    let parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
+    let qCode = parseRet.queryObject;
+    let parameters = parseRet.parameters;
+    assert.equal(qCode, '{"user.name.last": userNameLast}');
+    assert.equal(parameters.length, 1);
+    assert.equal(parameters[0].name, 'userNameLast');
+
+
+    code = esprima.parseScript('db.test.find({"user.name.last": "joey", "user.age" : {$gt: 10}})');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
+    qCode = parseRet.queryObject;
+    parameters = parseRet.parameters;
+    assert.equal(qCode, '{"user.name.last": userNameLast,"user.age": {$gt: userAge}}');
+    assert.equal(parameters.length, 2);
+    assert.equal(parameters[0].name, 'userNameLast');
+    assert.equal(parameters[1].name, 'userAge');
+  });
 });

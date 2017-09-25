@@ -30,9 +30,15 @@ const translators = {
 
 class MongoShellTranslator {
 
-  constructor(stype) {
-    this.statementType = '';
+  constructor(stype, connection) {
     this.sType = stype;
+    this.connection = connection;
+  }
+
+  createConnectionStatement() {
+    if (this.connection) {
+
+    }
   }
 
   /**
