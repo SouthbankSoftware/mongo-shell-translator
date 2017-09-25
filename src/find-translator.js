@@ -44,10 +44,10 @@ const getJsonExpression = (params) => {
  * @param {*} findExpression the find expression inside the statement
  * @param {*} params an array include ast expression such as limit(10), skip(100), etc.
  */
-const createParameterizedFunction = (statement, findExpression, params) => {
+const createParameterizedFunction = (statement, findExpression, params, context) => {
   const db = translator.findDbName(statement);
   const collection = translator.findCollectionName(statement);
-  const functionName = `${collection}Find`;
+  const functionName = context.getFunctionName(`${collection}Find`);
   const args = findExpression.arguments;
   const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
   const expParams = getJsonExpression(params);

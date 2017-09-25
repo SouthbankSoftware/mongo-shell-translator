@@ -35,13 +35,14 @@ const createPromise = (db, collection, functionName, options) => {
  * @param {*} statement
  * @param {*} updateExpression the update expression inside the statement
  */
-const createParameterizedFunction = (statement, updateExpression) => {
+const createParameterizedFunction = (statement, updateExpression, params, context) => {
   const db = translator.findDbName(statement);
   const collection = translator.findCollectionName(statement);
   const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
   const args = updateExpression.arguments;
   const options = args.length > 2 ? args[2] : null;
-  const functionName = `${collection}${getFunctionName(options)}`;
+  let functionName = `${collection}${getFunctionName(options)}`;
+  functionName = context.getFunctionName(functionName);
   let updateCmd = '';
   let callFunctionParams = ''; // the parameters we need to put on calling the generated function
 

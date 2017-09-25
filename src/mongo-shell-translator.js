@@ -6,9 +6,9 @@ import deleteTranslator from './delete-translator';
 import insertTranslator from './insert-translator';
 import generate from './code-generator';
 import { parseOptions, commandName } from './options';
+import Context from './context';
 
 const esprima = require('esprima');
-const estraverse = require('estraverse');
 const escodegen = require('escodegen');
 
 const translators = {
@@ -36,6 +36,7 @@ class MongoShellTranslator {
   }
 
   translate(shell) {
+    const context = new Context();
     let ast = esprima.parseScript(shell, parseOptions);
     ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
     const statements = ast.body;
@@ -45,7 +46,7 @@ class MongoShellTranslator {
       if (name) {
         const translator = translators[name];
         if (translator) {
-          const { functionStatement, callStatement } = translator.createParameterizedFunction(statement, expression, params);
+          const { functionStatement, callStatement } = translator.createParameterizedFunction(statement, expression, params, context);
           newAst.body.push(functionStatement);
           if (callStatement) {
             newAst.body.push(callStatement);
