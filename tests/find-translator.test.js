@@ -5,6 +5,7 @@ const utils = require('./utils');
 const findTranslator = require('../src/find-translator.js');
 const commonTranslator = require('../src/common-translator');
 const esprima = require('esprima');
+const Context = require('../src/context');
 
 describe('test find translator', () => {
   it('test get json expression of find command', () => {
@@ -36,7 +37,7 @@ describe('test find translator', () => {
     const ast = esprima.parseScript('db.test.find()');
     const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('find', name);
-    const { functionStatement, functionName, callStatement } = findTranslator.createParameterizedFunction(ast.body[0], expression, params);
+    const { functionStatement, functionName, callStatement } = findTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context());
     assert.equal(callStatement.body.length, 1);
     assert.equal(functionName, 'testFind');
     assert.equal(functionStatement.id.name, 'testFind');
