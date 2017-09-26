@@ -20,6 +20,7 @@
     "linebreak-style": "off",
     "global-require": "off",
     "semi": "warn",
+    "no-use-before-define": "off",
     "no-param-reassign": "off",
     "class-methods-use-this": "off",
     "arrow-body-style": "off",

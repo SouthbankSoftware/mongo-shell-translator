@@ -33,69 +33,85 @@ const getParameterNumber = (arg, num = 0) => {
   return num;
 };
 
-const parseObjectExpressionArgument = (arg, many = false, parentKey = '', parameters = [], paramSuffix = '') => {
-  let queryObject = '{';
-  const properties = arg.properties;
-  properties.forEach((property, i) => {
-    let keyValue = '';
-    let keyName = '';
-    if (property.key.type === esprima.Syntax.Identifier) {
-      keyValue = property.key.name;
-      keyName = property.key.name;
-    } else if (property.key.type === esprima.Syntax.Literal) {
-      keyValue = property.key.value;
-      keyName = property.key.raw;
+const parseProperty = (property, many = false, parentKey = '', parameters = [], paramSuffix = '') => {
+  let queryObject = '';
+  let keyValue = '';
+  let keyName = '';
+  if (property.key.type === esprima.Syntax.Identifier) {
+    keyValue = property.key.name;
+    keyName = property.key.name;
+  } else if (property.key.type === esprima.Syntax.Literal) {
+    keyValue = property.key.value;
+    keyName = property.key.raw;
+  }
+  const jsonObjName = paramSuffix ? 'u.' : 'q.';
+  const ignoreKey = ['$and'].indexOf(keyName) >= 0;
+  if (keyName === '$eq' || keyName === '$gt' || keyName === '$gte' || keyName === '$in' || keyName === '$exists' ||
+    keyName === '$lt' || keyName === '$lte' || keyName === '$ne' || keyName === '$nin') {
+    keyValue = parentKey;
+  }
+  const camelKeyValue = camelCase(keyValue);
+  if (property.value.type === esprima.Syntax.Literal) {
+    if (many) {
+      const camel = camelCase(`${keyValue}`);
+      queryObject += `${keyName}: ${jsonObjName}${camel}${paramSuffix}`;
+    } else {
+      const camel = camelCase(keyValue);
+      queryObject += `${keyName}: ${camel}${paramSuffix}`;
+    }!ignoreKey && parameters.push({ name: camelKeyValue, value: property.value.raw });
+  } else if (property.value.type === esprima.Syntax.ObjectExpression) {
+    queryObject += `${keyName}: ${parseObjectExpressionArgument(property.value, many, keyValue, parameters, paramSuffix)}`;
+  } else if (property.value.type === esprima.Syntax.ArrayExpression) {
+    let simpleArrayElement = false;
+    for (let j = 0; j < property.value.elements.length; j += 1) {
+      if (property.value.elements[j].type === esprima.Syntax.Literal) {
+        simpleArrayElement = true;
+        break;
+      }
     }
-    const jsonObjName = paramSuffix ? 'u.' : 'q.';
-    const ignoreKey = ['$and'].indexOf(keyName) >= 0;
-    if (keyName === '$eq' || keyName === '$gt' || keyName === '$gte' || keyName === '$in' || keyName === '$exists' ||
-      keyName === '$lt' || keyName === '$lte' || keyName === '$ne' || keyName === '$nin') {
-      keyValue = parentKey;
-    }
-    const camelKeyValue = camelCase(keyValue);
-    if (property.value.type === esprima.Syntax.Literal) {
+    if (simpleArrayElement) {
       if (many) {
         const camel = camelCase(`${keyValue}`);
         queryObject += `${keyName}: ${jsonObjName}${camel}${paramSuffix}`;
       } else {
         const camel = camelCase(keyValue);
         queryObject += `${keyName}: ${camel}${paramSuffix}`;
-      }!ignoreKey && parameters.push({ name: camelKeyValue, value: property.value.raw });
-    } else if (property.value.type === esprima.Syntax.ObjectExpression) {
-      queryObject += `${keyName}: ${parseObjectExpressionArgument(property.value, many, keyValue, parameters, paramSuffix)}`;
-    } else if (property.value.type === esprima.Syntax.ArrayExpression) {
-      let simpleArrayElement = false;
-      for (let j = 0; j < property.value.elements.length; j += 1) {
-        if (property.value.elements[j].type === esprima.Syntax.Literal) {
-          simpleArrayElement = true;
-          break;
+      }!ignoreKey && parameters.push({ name: camelKeyValue, value: escodegen.generate(property.value) });
+    } else {
+      !ignoreKey && parameters.push({ name: camelKeyValue, value: escodegen.generate(property.value) });
+      queryObject += `${keyName}: [`;
+      property.value.elements.forEach((element, j) => {
+        queryObject += `${parseObjectExpressionArgument(element, many, keyName, parameters)}`;
+        if (j < property.value.elements.length - 1) {
+          queryObject += ',';
         }
-      }
-      if (simpleArrayElement) {
-        if (many) {
-          const camel = camelCase(`${keyValue}`);
-          queryObject += `${keyName}: ${jsonObjName}${camel}${paramSuffix}`;
-        } else {
-          const camel = camelCase(keyValue);
-          queryObject += `${keyName}: ${camel}${paramSuffix}`;
-        }!ignoreKey && parameters.push({ name: camelKeyValue, value: escodegen.generate(property.value) });
-      } else {
-        !ignoreKey && parameters.push({ name: camelKeyValue, value: escodegen.generate(property.value) });
-        queryObject += `${keyName}: [`;
-        property.value.elements.forEach((element, j) => {
-          queryObject += `${parseObjectExpressionArgument(element, many, keyName, parameters)}`;
-          if (j < property.value.elements.length - 1) {
-            queryObject += ',';
-          }
-        });
-        queryObject += ']';
-      }
+      });
+      queryObject += ']';
     }
-    if (i < arg.properties.length - 1) {
-      queryObject += ',';
-    }
-  });
-  queryObject += '}';
+  }
+  return queryObject;
+};
+
+const parseObjectExpressionArgument = (arg, many = false, parentKey = '', parameters = [], paramSuffix = '') => {
+  let queryObject = '';
+  if (arg.type === esprima.Syntax.ObjectExpression) {
+    queryObject = '{';
+    const properties = arg.properties;
+    properties.forEach((property, i) => {
+      queryObject += parseProperty(property, many, parentKey, parameters, paramSuffix);
+      if (i < arg.properties.length - 1) {
+        queryObject += ',';
+      }
+    });
+    queryObject += '}';
+  } else if (arg.type === esprima.Syntax.ArrayExpression) {
+    queryObject = '[';
+    arg.elements.forEach((element) => {
+      queryObject += parseObjectExpressionArgument(element, many, parentKey, parameters, paramSuffix);
+    });
+    queryObject += ']';
+  }
+
   return queryObject;
 };
 
@@ -123,7 +139,8 @@ const parseQueryManyParameters = (arg, paramSuffix) => {
   if (!arg) {
     return { queryObject, parameters };
   }
-  if (arg.type === esprima.Syntax.ObjectExpression) {
+  if (arg.type === esprima.Syntax.ObjectExpression ||
+    arg.type === esprima.Syntax.ArrayExpression) {
     queryObject = parseObjectExpressionArgument(arg, true, '', parameters, paramSuffix);
   }
   return { queryObject, parameters };

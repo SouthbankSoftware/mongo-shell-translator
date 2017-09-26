@@ -340,11 +340,24 @@ describe('argument parser test suite', () => {
   });
 
   it('test parse array parameter', () => {
-    const code = esprima.parseScript('db.test.find([{"user.name.last": "joey"}])');
-    const { expression } = translator.findSupportedStatement(code.body[0]);
-    const parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
-    const qCode = parseRet.queryObject;
-    const parameters = parseRet.parameters;
+    let code = esprima.parseScript('db.test.find([{"user.name.last": "joey"}])');
+    let { expression } = translator.findSupportedStatement(code.body[0]);
+    let parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
+    let qCode = parseRet.queryObject;
+    let parameters = parseRet.parameters;
     assert.equal(qCode, '[{"user.name.last": userNameLast}]');
+    assert.equal(parameters.length, 1);
+    assert.equal(parameters[0].name, 'userNameLast');
+    assert.equal(parameters[0].value, '"joey"');
+
+    code = esprima.parseScript('db.test.find([{"user.name.last": "joey"}])');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    parseRet = parameterParser.parseQueryManyParameters(expression.arguments[0]);
+    qCode = parseRet.queryObject;
+    parameters = parseRet.parameters;
+    assert.equal(qCode, '[{"user.name.last": q.userNameLast}]');
+    assert.equal(parameters.length, 1);
+    assert.equal(parameters[0].name, 'userNameLast');
+    assert.equal(parameters[0].value, '"joey"');
   });
 });
