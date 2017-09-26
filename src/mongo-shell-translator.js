@@ -93,7 +93,7 @@ class MongoShellTranslator {
         if (name) {
           const translator = translators[name];
           if (translator) {
-            const { functionStatement, callStatement } = translator.createParameterizedFunction(statement, expression, params, context);
+            const { functionStatement, callStatement } = translator.createParameterizedFunction(statement, expression, params, context, name);
             newAst.body.push(functionStatement);
             if (callStatement) {
               newAst.body.push(callStatement);

@@ -140,22 +140,6 @@ function explainsUpdateMany(db, userNameLast, userNameLastUpdated, options) {
   return (returnData);
 }
 MongoClient.connect(url, async(err, db) => {
-  console.oldlog = console.log;
-  try {
-    console.log = (v) => {
-      console.oldlog('xxxx', v);
-    };
-    const ret = eval(userFind);
-    if (ret && ret.then) {
-      ret.then(() => {
-        console.log = console.oldlog;
-        console.log('finished');
-      });
-    } else {
-      console.oldlog('not promise');
-      console.log = console.oldlog;
-    }
-  } catch (err) {
-    console.error('error:', err);
-  }
+  const doc = await db.db('test').collection('users').findOne({}, { fields: { _id: 0 } });
+  console.log(doc);
 });

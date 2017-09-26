@@ -53,8 +53,9 @@ const createCallStatement = (functionName, params, context) => {
  * @param {*} statement
  * @param {*} findExpression the find expression inside the statement
  * @param {*} params an array include ast expression such as limit(10), skip(100), etc.
+ * @param {*} originFunName original shell function name
  */
-const createParameterizedFunction = (statement, findExpression, params, context) => {
+const createParameterizedFunction = (statement, findExpression, params, context, originFunName) => {
   const db = translator.findDbName(statement);
   const collection = translator.findCollectionName(statement);
   const functionName = context.getFunctionName(`${collection}Find`);
@@ -134,13 +135,13 @@ const createParameterizedFunction = (statement, findExpression, params, context)
     functionStatement.body.body.push(esprima.parseScript('const useDb = db').body[0]);
   }
   queryCmd && functionStatement.body.body.push(esprima.parseScript(queryCmd).body[0]);
-  let queryStatement = `const arrayData = useDb.collection('${collection}').find(query)`;
+  let queryStatement = `const arrayData = useDb.collection('${collection}').${originFunName}(query)`;
   if (projections) {
     queryStatement += `.project(${projections})`;
   }
   if (limit) {
     queryStatement += `.limit(${limit})`;
-  } else {
+  } else if (originFunName === 'find') {
     queryStatement += '.limit(20)';
   }
   if (skip) {
@@ -149,7 +150,9 @@ const createParameterizedFunction = (statement, findExpression, params, context)
   if (batchSize) {
     queryStatement += `.batchSize(${batchSize})`;
   }
-  queryStatement += '.toArray()';
+  if (originFunName === 'find') {
+    queryStatement += '.toArray()';
+  }
   body.push(esprima.parseScript(queryStatement));
   body.push(esprima.parseScript('resolve(arrayData)'));
   functionStatement.body.body.push(prom);
