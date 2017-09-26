@@ -338,4 +338,13 @@ describe('argument parser test suite', () => {
     assert.equal(parameters[0].name, 'userNameLast');
     assert.equal(parameters[1].name, 'userAge');
   });
+
+  it('test parse array parameter', () => {
+    const code = esprima.parseScript('db.test.find([{"user.name.last": "joey"}])');
+    const { expression } = translator.findSupportedStatement(code.body[0]);
+    const parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
+    const qCode = parseRet.queryObject;
+    const parameters = parseRet.parameters;
+    assert.equal(qCode, '[{"user.name.last": userNameLast}]');
+  });
 });

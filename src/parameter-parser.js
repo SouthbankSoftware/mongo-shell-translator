@@ -105,7 +105,8 @@ const parseQueryParameters = (arg, paramSuffix = '') => {
   if (!arg) {
     return { queryObject, parameters };
   }
-  if (arg.type === esprima.Syntax.ObjectExpression) {
+  if (arg.type === esprima.Syntax.ObjectExpression ||
+    arg.type === esprima.Syntax.ArrayExpression) {
     queryObject = parseObjectExpressionArgument(arg, false, '', parameters, paramSuffix);
   }
   return { queryObject, parameters };
