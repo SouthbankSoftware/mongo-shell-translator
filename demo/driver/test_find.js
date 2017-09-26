@@ -106,6 +106,20 @@ results.then(r => {\
         console.log(JSON.stringify(doc));\
     });\
 });";
+
+function explainsUpdateMany(db, userNameLast, userNameLastUpdated, options) {
+  const useDb = db.db('SampleCollections');
+  const query = { 'user.name.last': userNameLast };
+  const update = { 'user.name.last': userNameLastUpdated };
+  const returnData = new Promise((resolve) => {
+    const data = useDb.collection('explains').updateOne(query, { $set: update }, options);
+    resolve(data);
+  });
+  return (returnData);
+}
 MongoClient.connect(url, async(err, db) => {
-  await eval(str);
+  const results = explainsUpdateMany(db, 'Lee', 'Joey', { multi: false });
+  results.then((r) => {
+    console.log(JSON.stringify(r));
+  });
 });

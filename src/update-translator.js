@@ -5,11 +5,11 @@ const template = require('./template-ast');
 const escodegen = require('escodegen');
 
 const getFunctionName = (options) => {
-  let functionName = 'UpdateOne';
+  let functionName = 'updateOne';
   options && options.properties && options.properties.forEach((property) => {
     if (property.type === esprima.Syntax.Property && property.key.type === esprima.Syntax.Identifier &&
       property.key.name === 'multi' && property.value.value === true) {
-      functionName = 'UpdateMany';
+      functionName = 'updateMany';
     }
   });
   return functionName;
@@ -20,13 +20,21 @@ const createPromise = (db, collection, functionName, options) => {
   const body = prom.body[0].declarations[0].init.arguments[0].body.body;
   let queryStatement;
   if (!options) {
-    queryStatement = `const data = ${db}.collection('${collection}').${functionName}(query, update)`;
+    queryStatement = `const data = ${db}.collection('${collection}').${functionName}(query, {$set:update})`;
   } else {
-    queryStatement = `${db}.collection('${collection}').${functionName}(query, update, options)`;
+    queryStatement = `const data = ${db}.collection('${collection}').${functionName}(query, {$set:update}, options)`;
   }
   body.push(esprima.parseScript(queryStatement));
   body.push(esprima.parseScript('resolve(data)'));
   return prom;
+};
+
+const createCallStatement = (functionName, params) => {
+  const script = `const results=${functionName}(${params}); \
+  results.then((r) => { \
+      console.log(JSON.stringify(r));\
+  });`;
+  return esprima.parseScript(script);
 };
 
 /**
@@ -43,6 +51,11 @@ const createParameterizedFunction = (statement, updateExpression, params, contex
   const options = args.length > 2 ? args[2] : null;
   const driverFunctionName = getFunctionName(options);
   let functionName = `${collection}${driverFunctionName}`;
+  if (driverFunctionName === 'updateOne') {
+    functionName = `${collection}UpdateOne`;
+  } else if (driverFunctionName === 'updateMany') {
+    functionName = `${collection}UpdateMany`;
+  }
   functionName = context.getFunctionName(functionName);
   let updateCmd = '';
   let callFunctionParams = ''; // the parameters we need to put on calling the generated function
@@ -91,42 +104,16 @@ const createParameterizedFunction = (statement, updateExpression, params, contex
     functionStatement.body.body = functionStatement.body.body.concat(esprima.parseScript(updateCmd).body);
   }
   functionStatement.body.body.push(createPromise('useDb', collection, driverFunctionName, options));
+  functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
   if (callFunctionParams) {
     callFunctionParams = `${db}, ${callFunctionParams}`;
   } else {
     callFunctionParams = `${db}`;
   }
-  const callStatement = esprima.parseScript(`${functionName}(${callFunctionParams})`);
+  const callStatement = createCallStatement(functionName, callFunctionParams);
   return { functionStatement, functionName, callStatement };
 };
 
-const createCollectionStatement = (node, dbName, colName) => {
-  let multi = false;
-  const argLen = node.arguments.length;
-  if (argLen >= 3) {
-    // check multi parameter
-    const options = node.arguments[2];
-    options.properties.forEach((p, i, object) => {
-      if (p.key.name === 'multi') {
-        multi = p.value.value;
-        object.splice(i, 1);
-      }
-    });
-  } else {
-    const args = node.arguments;
-    for (let i = 0; i < 2 - argLen; i += 1) {
-      args.push({ type: 'ObjectExpression', properties: [] });
-    }
-    node.arguments = args;
-  }
-  if (node.callee && node.callee.property) {
-    node.callee.property.name = multi ? 'updateMany' : 'updateOne';
-  }
-  const statement = translator.createCollectionStatement(node, dbName, colName);
-  return Object.assign(statement, { arguments: node.arguments });
-};
-
 module.exports = {
-  createCollectionStatement,
   createParameterizedFunction,
 };
