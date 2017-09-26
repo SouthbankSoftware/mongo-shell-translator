@@ -88,6 +88,7 @@ class MongoShellTranslator {
           context.currentDB = statement.expression.arguments[0].name;
         }
       } else {
+        context.numStatement += 1;
         const { name, expression, params } = commonTranslator.findSupportedStatement(statement);
         if (name) {
           const translator = translators[name];

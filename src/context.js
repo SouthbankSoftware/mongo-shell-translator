@@ -4,6 +4,7 @@ const _ = require('lodash');
 class Context {
   constructor() {
     this.functionCounter = [];
+    this.numStatement = 0;
   }
 
   /**

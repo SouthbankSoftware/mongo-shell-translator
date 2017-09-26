@@ -37,9 +37,9 @@ const getJsonExpression = (params) => {
   });
 };
 
-const createCallStatement = (functionName, params) => {
-  const script = `const results=${functionName}(${params}); \
-  results.then((r) => { \
+const createCallStatement = (functionName, params, context) => {
+  const script = `const results${context.numStatement}=${functionName}(${params}); \
+  results${context.numStatement}.then((r) => { \
       r.forEach((doc) => {\
             console.log(JSON.stringify(doc));\
         });\
@@ -162,7 +162,7 @@ const createParameterizedFunction = (statement, findExpression, params, context)
   } else {
     callFunctionParams = `${db}`;
   }
-  const callStatement = createCallStatement(functionName, callFunctionParams); // esprima.parseScript(`${functionName}(${callFunctionParams})`);
+  const callStatement = createCallStatement(functionName, callFunctionParams, context); // esprima.parseScript(`${functionName}(${callFunctionParams})`);
   return { functionStatement, functionName, callStatement };
 };
 
