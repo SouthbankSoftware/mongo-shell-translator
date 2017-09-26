@@ -293,7 +293,7 @@ const findSupportedStatement = (statement) => {
   const params = [];
   let dbName;
   do {
-    if (root.type === esprima.Syntax.MemberExpression &&
+    if (root && root.type === esprima.Syntax.MemberExpression &&
       root.object.type === esprima.Syntax.MemberExpression &&
       root.object.object.type === esprima.Syntax.CallExpression &&
       root.object.object.callee.property.name === 'getSiblingDB' &&

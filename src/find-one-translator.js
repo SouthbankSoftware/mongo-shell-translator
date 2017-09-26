@@ -40,9 +40,7 @@ const getJsonExpression = (params) => {
 const createCallStatement = (functionName, params, context) => {
   const script = `const results${context.numStatement}=${functionName}(${params}); \
   results${context.numStatement}.then((r) => { \
-      r.forEach((doc) => {\
-            console.log(JSON.stringify(doc));\
-        });\
+          console.log(JSON.stringify(r));\
   });`;
   return esprima.parseScript(script);
 };
