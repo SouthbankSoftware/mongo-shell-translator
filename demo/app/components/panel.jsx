@@ -12,7 +12,8 @@ export default class Panel extends React.Component {
   constructor (props) {
     super(props);
     this.state = {
-      shell: 'db.test.find({"name":"joey"}, {_id: 0}, 10, 100, 1000) \ndb.test.find() \n'
+      shell: 'use SampleCollections\n'
+        + 'db.explains.find({"user.name.last":"Lee"}, {_id: 0}, 10, 100, 1000) \ndb.test.find() \n'
         + 'var i = db.test.find().toArray() \n'
         + 'i = db.test.find()\n'
         + 'db.test.update({"name":"joey"}, {"name":"mike"}, {multi: true})',

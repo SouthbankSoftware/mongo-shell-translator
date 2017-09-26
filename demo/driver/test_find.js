@@ -56,11 +56,6 @@ const updateTest = async(db) => {
   console.log(r);
 };
 
-const fun = async function(db) {
-  const r = await db.collection('test').updateOne({}, {});
-  console.log(r);
-};
-
 const deleteTest = async(db) => {
   // db.collection('explains').deleteOne({ 'user.name.last': 'Lee' }, (err, r) => {
   //   console.log(r);
@@ -80,19 +75,37 @@ const deleteTest = async(db) => {
   //   console.log(r);
   // });
   // eval("const r = await db.collection('explains').deleteOne({ 'user.name.last': 'Lee' }, { w: 1, wtimeout: 400, j: false }); console.log(r);");
-  const aaa = eval(" db.collection('explains').find().toArray().then((doc) => console.log(doc))");
-  console.log(aaa);
+
+  const ret = eval(testFind(db, 'Lee', {}, 10, 10, 10));
+
+  // const aaa = eval(" db.collection('explains').find().toArray().then((doc) => console.log(doc))");
+  // console.log(aaa);
 };
 
-function testFind(db, name, fields, limit, skip, batchSize) {
-  const useDb = db;
-  const query = { name };
+function testFind(db, userNameLast, fields, limit, skip, batchSize) {
+  const useDb = db.db('SampleCollections');
+  const query = { 'user.name.last': userNameLast };
   const returnData = new Promise((resolve) => {
-    const dataArray = useDb.collection('explains').find(query).project({ _id: 0 }).limit(10).skip(100).batchSize(1000).toArray();
-    resolve(dataArray);
+    const arrayData = useDb.collection('explains').find(query).project({ _id: 0 }).limit(10).skip(1).batchSize(1000).toArray();
+    resolve(arrayData);
   });
   return (returnData);
 }
+const str = "function explainsFind(db, userNameLast, fields, limit, skip, batchSize) {\
+    const useDb = db.db('SampleCollections');\
+    const query = { 'user.name.last': userNameLast };\
+        const returnData = new Promise(resolve => {\
+                const arrayData = useDb.collection('explains').find(query).project({ _id: 0 }).limit(10).skip(100).batchSize(1000).toArray();\
+                resolve(arrayData);\
+    });\
+    return (returnData);\
+}\
+const results = explainsFind(db, 'Lee', 10, 100, 1000);\
+results.then(r => {\
+    r.forEach(doc => {\
+        console.log(JSON.stringify(doc));\
+    });\
+});";
 MongoClient.connect(url, async(err, db) => {
-  testFind(db, 'Lee').then(doc => console.log(doc));
+  await eval(str);
 });

@@ -37,6 +37,16 @@ const getJsonExpression = (params) => {
   });
 };
 
+const createCallStatement = (functionName, params) => {
+  const script = `const results=${functionName}(${params}); \
+  results.then((r) => { \
+      r.forEach((doc) => {\
+            console.log(JSON.stringify(doc));\
+        });\
+  });`;
+  return esprima.parseScript(script);
+};
+
 /**
  * create parameterized function
  *
@@ -61,9 +71,7 @@ const createParameterizedFunction = (statement, findExpression, params, context)
       parameters.forEach((p, i) => {
         functionParams.push({ type: esprima.Syntax.Identifier, name: p.name });
         callFunctionParams += p.value;
-        if (i !== parameters.length - 1) {
-          callFunctionParams += ',';
-        }
+        callFunctionParams += ',';
       });
     } else {
       functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
@@ -83,10 +91,12 @@ const createParameterizedFunction = (statement, findExpression, params, context)
   if (limitParam) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'limit' });
     limit = limitParam.parameters;
+    callFunctionParams += `${limit},`;
   } else if (args.length > 2) {
     if (args[2].type === esprima.Syntax.Literal) {
       functionParams.push({ type: esprima.Syntax.Identifier, name: 'limit' });
       limit = args[2].value;
+      callFunctionParams += `${limit},`;
     }
   }
   let skip;
@@ -94,10 +104,12 @@ const createParameterizedFunction = (statement, findExpression, params, context)
   if (skipParam) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'skip' });
     skip = skipParam.parameters;
+    callFunctionParams += `${skip},`;
   } else if (args.length > 3) {
     if (args[3].type === esprima.Syntax.Literal) {
       functionParams.push({ type: esprima.Syntax.Identifier, name: 'skip' });
       skip = args[3].value;
+      callFunctionParams += `${skip},`;
     }
   }
   let batchSize;
@@ -105,10 +117,12 @@ const createParameterizedFunction = (statement, findExpression, params, context)
   if (batchSizeParam) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'batchSize' });
     batchSize = batchSizeParam.parameters;
+    callFunctionParams += `${batchSize},`;
   } else if (args.length > 4) {
     if (args[4].type === esprima.Syntax.Literal) {
       functionParams.push({ type: esprima.Syntax.Identifier, name: 'batchSize' });
       batchSize = args[4].value;
+      callFunctionParams += `${batchSize},`;
     }
   }
   const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
@@ -120,7 +134,7 @@ const createParameterizedFunction = (statement, findExpression, params, context)
     functionStatement.body.body.push(esprima.parseScript('const useDb = db').body[0]);
   }
   queryCmd && functionStatement.body.body.push(esprima.parseScript(queryCmd).body[0]);
-  let queryStatement = `useDb.collection('${collection}').find(query)`;
+  let queryStatement = `const arrayData = useDb.collection('${collection}').find(query)`;
   if (projections) {
     queryStatement += `.project(${projections})`;
   }
@@ -135,15 +149,18 @@ const createParameterizedFunction = (statement, findExpression, params, context)
   }
   queryStatement += '.toArray()';
   body.push(esprima.parseScript(queryStatement));
-  body.push(esprima.parseScript('resolve(returnData)'));
+  body.push(esprima.parseScript('resolve(arrayData)'));
   functionStatement.body.body.push(prom);
   functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
   if (callFunctionParams) {
+    if (callFunctionParams.endsWith(',')) {
+      callFunctionParams = callFunctionParams.substr(0, callFunctionParams.length - 1);
+    }
     callFunctionParams = `${db}, ${callFunctionParams}`;
   } else {
     callFunctionParams = `${db}`;
   }
-  const callStatement = esprima.parseScript(`${functionName}(${callFunctionParams})`);
+  const callStatement = createCallStatement(functionName, callFunctionParams); // esprima.parseScript(`${functionName}(${callFunctionParams})`);
   return { functionStatement, functionName, callStatement };
 };
 

@@ -73,7 +73,6 @@ class MongoShellTranslator {
       return '';
     }
     const filtered = this.preProcess(shell);
-    console.log('filtered:', filtered);
     const context = new Context();
     let ast = esprima.parseScript(filtered, parseOptions);
     ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
