@@ -129,17 +129,17 @@ results.then(r => {\
 });\
 ';
 
-function explainsDeleteOne(db, userNameLast) {
+function testInsertOne(db, a) {
   const useDb = db.db('SampleCollections');
-  const query = { 'user.name.last': userNameLast };
+  const doc = { a };
   const returnData = new Promise((resolve) => {
-    const arrayData = useDb.collection('explains').deleteOne(query);
+    const arrayData = useDb.collection('test').insertOne(doc);
     resolve(arrayData);
   });
   return (returnData);
 }
 MongoClient.connect(url, async(err, db) => {
-  const results = explainsDeleteOne(db, 'Lee');
+  const results = testInsertOne(db, 1);
   results.then((r) => {
     console.log(JSON.stringify(r));
   });

@@ -2,7 +2,6 @@ import commonTranslator from './common-translator';
 import findTranslator from './find-translator';
 import findOneTranslator from './find-one-translator';
 import updateTranslator from './update-translator';
-import deleteTranslator from './delete-translator';
 import insertTranslator from './insert-translator';
 import generate from './code-generator';
 import { parseOptions, commandName } from './options';
