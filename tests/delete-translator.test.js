@@ -1,39 +1,29 @@
 const MongoShellTranslator = require('../src/mongo-shell-translator').MongoShellTranslator;
 const options = require('../src/options');
 const utils = require('./utils');
+const esprima = require('esprima');
+const commonTranslator = require('../src/common-translator');
+const Context = require('../src/context');
+const assert = require('assert');
 
 describe('test delete translator', () => {
-  it('test delete callback', () => {
-    const translator = new MongoShellTranslator();
-    let nativeCode = translator.translate('db.test.deleteOne()');
-    utils.assertStatementEqual(nativeCode, 'db.collection(\'test\').deleteOne({},function (err, r) {});');
-
-    nativeCode = translator.translate('db.explains.deleteOne({\'user.name.last\': \'Lee\'})');
-    utils.assertStatementEqual(nativeCode, 'db.collection(\'explains\').deleteOne({\'user.name.last\': \'Lee\'},function (err, r) {});');
-
-    nativeCode = translator.translate('db.explains.deleteOne({\'user.name.last\': \'Lee\'}, {w:1, wtimeout:400, j: false})');
-    utils.assertStatementEqual(nativeCode, 'db.collection(\'explains\').deleteOne({\'user.name.last\': \'Lee\'}, {w:1, wtimeout:400, j: false},function (err, r) {});');
+  it('test deleteOne translator', () => {
+    const ast = esprima.parseScript('db.test.deleteOne({"name": "joey"})');
+    const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('deleteOne', name);
+    const { functionStatement, functionName, callStatement } = commonTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context(), name);
+    assert.equal(callStatement.body.length, 2);
+    assert.equal(functionName, 'testDeleteOne');
+    assert.equal(functionStatement.id.name, 'testDeleteOne');
   });
 
-  it('test delete promise', () => {
-    const translator = new MongoShellTranslator(options.syntaxType.promise);
-    let nativeCode = translator.translate('db.test.deleteOne()');
-    utils.assertStatementEqual(nativeCode, 'db.collection(\'test\').deleteOne({}).then(function (r) {});');
-
-    nativeCode = translator.translate('db.explains.deleteMany({\'user.name.last\': \'Lee\'})');
-    utils.assertStatementEqual(nativeCode, 'db.collection(\'explains\').deleteMany({\'user.name.last\': \'Lee\'}).then(function (r) {});');
-
-    nativeCode = translator.translate('db.explains.deleteOne({\'user.name.last\': \'Lee\'}, {w:1, wtimeout:400, j: false})');
-    utils.assertStatementEqual(nativeCode, 'db.collection(\'explains\').deleteOne({\'user.name.last\': \'Lee\'}, {w:1, wtimeout:400, j: false}).then(function (r) {});');
-  });
-
-  it('test delete await', () => {
-    const translator = new MongoShellTranslator(options.syntaxType.await);
-
-    let nativeCode = translator.translate('const fun = async function(){const r = db.explains.deleteOne({\'user.name.last\': \'Lee\'})}');
-    utils.assertStatementEqual(nativeCode, 'const fun = async function(){const r = await db.collection(\'explains\').deleteOne({\'user.name.last\': \'Lee\'});};');
-
-    nativeCode = translator.translate('const fun = async function(){const r = db.explains.deleteOne({\'user.name.last\': \'Lee\'}, {w:1, wtimeout:400, j: false})}');
-    utils.assertStatementEqual(nativeCode, 'const fun = async function(){ const r = await db.collection(\'explains\').deleteOne({\'user.name.last\': \'Lee\'}, {w:1, wtimeout:400, j: false});};');
+  it('test deleteMany translator', () => {
+    const ast = esprima.parseScript('db.test.deleteMany({"name": "joey"})');
+    const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('deleteMany', name);
+    const { functionStatement, functionName, callStatement } = commonTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context(), name);
+    assert.equal(callStatement.body.length, 2);
+    assert.equal(functionName, 'testDeleteMany');
+    assert.equal(functionStatement.id.name, 'testDeleteMany');
   });
 });

@@ -43,13 +43,13 @@ const createCallStatement = (functionName, params) => {
  * @param {*} statement
  * @param {*} updateExpression the update expression inside the statement
  */
-const createParameterizedFunction = (statement, updateExpression, params, context) => {
+const createParameterizedFunction = (statement, updateExpression, params, context, originFunName) => {
   const db = translator.findDbName(statement);
   const collection = translator.findCollectionName(statement);
   const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
   const args = updateExpression.arguments;
   const options = args.length > 2 ? args[2] : null;
-  const driverFunctionName = getFunctionName(options);
+  const driverFunctionName = originFunName === 'update' ? getFunctionName(options) : originFunName;
   let functionName = `${collection}${driverFunctionName}`;
   if (driverFunctionName === 'updateOne') {
     functionName = `${collection}UpdateOne`;
