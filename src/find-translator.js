@@ -140,6 +140,8 @@ const createParameterizedFunction = (statement, findExpression, params, context)
   }
   if (limit) {
     queryStatement += `.limit(${limit})`;
+  } else {
+    queryStatement += '.limit(20)';
   }
   if (skip) {
     queryStatement += `.skip(${skip})`;

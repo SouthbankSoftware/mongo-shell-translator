@@ -14,7 +14,7 @@ let ast = esprima.parseScript('db.find().test()//dd', {
 ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
 // console.log(ast);
 // Connection URL
-const url = 'mongodb://localhost:27017/SampleCollections';
+const url = 'mongodb://localhost:28017/test';
 
 const aggregateTest = (db) => {
   // db.collection('explains').aggregate([], { explain: false, allowDiskUse: true, maxTimeMS: 100, bypassDocumentValidation: true }).toArray((err, docs) => {
@@ -95,17 +95,39 @@ const str = "function explainsFind(db, userNameLast, fields, limit, skip, batchS
     const useDb = db.db('SampleCollections');\
     const query = { 'user.name.last': userNameLast };\
         const returnData = new Promise(resolve => {\
-                const arrayData = useDb.collection('explains').find(query).project({ _id: 0 }).limit(10).skip(100).batchSize(1000).toArray();\
+                const arrayData = useDb.collection('explains').find(query).project({ _id: 0 }).limit(1).skip(1).batchSize(1000).toArray();\
                 resolve(arrayData);\
     });\
     return (returnData);\
 }\
-const results = explainsFind(db, 'Lee', 10, 100, 1000);\
+const explainsFind(db, 'Lee', 10, 100, 1000);\
+";
+
+const userFind = 'function usersFind(db, userAge, userNameLast) {\
+  const useDb = db.db("test");\
+  const query = {\
+    "user.age": { $gt: userAge },\
+    "user.name.last": userNameLast\
+  };\
+  const returnData = new Promise(resolve => {\
+    const arrayData = useDb.collection("users").find(query).limit(1).toArray();\
+    resolve(arrayData);\
+  });\
+  return returnData;\
+}\
+let results = usersFind(db, 5, "Lee", 1);\
 results.then(r => {\
-    r.forEach(doc => {\
-        console.log(JSON.stringify(doc));\
-    });\
-});";
+  r.forEach(doc => {\
+    console.log(JSON.stringify(doc));\
+  });\
+});\
+results = usersFind(db, 5, "Lee", 1);\
+results.then(r => {\
+  r.forEach(doc => {\
+    console.log(JSON.stringify(doc));\
+  });\
+});\
+';
 
 function explainsUpdateMany(db, userNameLast, userNameLastUpdated, options) {
   const useDb = db.db('SampleCollections');
@@ -118,8 +140,22 @@ function explainsUpdateMany(db, userNameLast, userNameLastUpdated, options) {
   return (returnData);
 }
 MongoClient.connect(url, async(err, db) => {
-  const results = explainsUpdateMany(db, 'Lee', 'Joey', { multi: false });
-  results.then((r) => {
-    console.log(JSON.stringify(r));
-  });
+  console.oldlog = console.log;
+  try {
+    console.log = (v) => {
+      console.oldlog('xxxx', v);
+    };
+    const ret = eval(userFind);
+    if (ret && ret.then) {
+      ret.then(() => {
+        console.log = console.oldlog;
+        console.log('finished');
+      });
+    } else {
+      console.oldlog('not promise');
+      console.log = console.oldlog;
+    }
+  } catch (err) {
+    console.error('error:', err);
+  }
 });
