@@ -85,7 +85,6 @@ const createParameterizedFunction = (statement, findExpression, params, context,
   if (args.length > 1) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'fields' });
     projections = `{fields: ${escodegen.generate(args[1])}}`;
-    console.log(projections);
   }
   const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
   const prom = translator.getPromiseStatement('returnData');

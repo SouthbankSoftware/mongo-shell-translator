@@ -89,7 +89,6 @@ class MongoShellTranslator {
         context.numStatement += 1;
         const { name, expression, params, dbName } = commonTranslator.findSupportedStatement(statement);
         if (name) {
-          console.log('get dbname', dbName);
           const translator = translators[name];
           if (translator) {
             const currentDB = context.currentDB;
@@ -110,9 +109,7 @@ class MongoShellTranslator {
         }
       }
     });
-    console.log('new ast ', newAst);
     const code = generate(newAst);
-    console.log('generated:', code);
     return code;
   }
 
