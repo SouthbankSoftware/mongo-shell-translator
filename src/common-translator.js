@@ -131,6 +131,9 @@ const findCollectionName = (statement) => {
         }
         break;
       } else if (root.object.type === esprima.Syntax.CallExpression) {
+        if (root.object.callee.property.name === 'getSiblingDB') {
+          return root.property.name;
+        }
         root = root.object.callee;
       } else {
         root = root.object;
@@ -288,15 +291,28 @@ const findSupportedStatement = (statement) => {
     expression = statement.declarations[0].init;
   }
   const params = [];
+  let dbName;
   do {
+    if (root.type === esprima.Syntax.MemberExpression &&
+      root.object.type === esprima.Syntax.MemberExpression &&
+      root.object.object.type === esprima.Syntax.CallExpression &&
+      root.object.object.callee.property.name === 'getSiblingDB' &&
+      root.object.object.arguments.length > 0) {
+      dbName = root.object.object.arguments[0].value;
+    }
     if (root && root.type === esprima.Syntax.MemberExpression &&
       root.property.type === esprima.Syntax.Identifier) {
       const name = root.property.name;
       if (Object.values(commandName).indexOf(name) > -1) {
-        return { name, expression, params };
+        return { name, expression, params, dbName };
       }
       if (root.object && root.object.type === esprima.Syntax.CallExpression) {
         params.push(expression);
+        if (root.object.callee.property.name === 'getSiblingDB') {
+          if (root.object.arguments.length > 0) {
+            dbName = root.object.arguments[0].value;
+          }
+        }
         expression = root.object;
         root = root.object.callee;
       } else {

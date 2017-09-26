@@ -87,11 +87,19 @@ class MongoShellTranslator {
         }
       } else {
         context.numStatement += 1;
-        const { name, expression, params } = commonTranslator.findSupportedStatement(statement);
+        const { name, expression, params, dbName } = commonTranslator.findSupportedStatement(statement);
         if (name) {
+          console.log('get dbname', dbName);
           const translator = translators[name];
           if (translator) {
+            const currentDB = context.currentDB;
+            if (dbName) {
+              context.currentDB = dbName;
+            }
             const { functionStatement, callStatement } = translator.createParameterizedFunction(statement, expression, params, context, name);
+            if (dbName) {
+              context.currentDB = currentDB;
+            }
             newAst.body.push(functionStatement);
             if (callStatement) {
               newAst.body.push(callStatement);
