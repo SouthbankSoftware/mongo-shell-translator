@@ -20,9 +20,9 @@ const createPromise = (db, collection, functionName, options) => {
   const body = prom.body[0].declarations[0].init.arguments[0].body.body;
   let queryStatement;
   if (!options) {
-    queryStatement = `const data = ${db}.collection('${collection}').${functionName}(query, {$set:update})`;
+    queryStatement = `const data = ${db}.collection('${collection}').${functionName}(query, update)`;
   } else {
-    queryStatement = `const data = ${db}.collection('${collection}').${functionName}(query, {$set:update}, options)`;
+    queryStatement = `const data = ${db}.collection('${collection}').${functionName}(query, update, options)`;
   }
   body.push(esprima.parseScript(queryStatement));
   body.push(esprima.parseScript('resolve(data)'));

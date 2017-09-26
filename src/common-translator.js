@@ -3,6 +3,8 @@ const escodegen = require('escodegen');
 const syntaxType = require('./options').syntaxType;
 const commandName = require('./options').commandName;
 const os = require('os');
+const parameterParser = require('./parameter-parser');
+const template = require('./template-ast');
 
 /**
  * create collection statement in native driver. It generates the code
@@ -322,6 +324,87 @@ const getSeparator = () => {
   return os.platform() === 'win32' ? '\r\n' : '\n';
 };
 
+const createCallStatement = (functionName, params) => {
+  const script = `const results=${functionName}(${params}); \
+  results.then((r) => { \
+      console.log(JSON.stringify(r));\
+  });`;
+  return esprima.parseScript(script);
+};
+
+
+/**
+ * create parameterized function
+ *
+ * @param {*} statement
+ * @param {*} updateExpression the update expression inside the statement
+ */
+const createParameterizedFunction = (statement, updateExpression, params, context, originFunName) => {
+  const db = findDbName(statement);
+  const collection = findCollectionName(statement);
+  const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
+  const args = updateExpression.arguments;
+  const driverFunctionName = originFunName;
+  let functionName = `${collection}${parameterParser.capitalizeFirst(driverFunctionName)}`;
+  functionName = context.getFunctionName(functionName);
+  let queryCmd = '';
+  let callFunctionParams = ''; // the parameters we need to put on calling the generated function
+  let extraParam = '';
+  if (args.length > 0) {
+    const pNum = parameterParser.getParameterNumber(args[0]);
+    if (pNum <= 4) {
+      const { queryObject, parameters } = parameterParser.parseQueryParameters(args[0]);
+      queryCmd += `const query = ${queryObject}`;
+      parameters.forEach((p) => {
+        functionParams.push({ type: esprima.Syntax.Identifier, name: p.name });
+        callFunctionParams += p.value;
+        callFunctionParams += ',';
+      });
+    } else {
+      functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
+      const { queryObject } = parameterParser.parseQueryManyParameters(args[0]);
+      queryCmd += `const query = ${queryObject}`;
+    }
+    args.slice(1).forEach((arg, i) => {
+      functionParams.push({ type: esprima.Syntax.Identifier, name: `arg${i + 1}` });
+      extraParam += `${escodegen.generate(arg)},`;
+    });
+    callFunctionParams += extraParam;
+  } else {
+    queryCmd = 'const query = {}';
+  }
+  const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
+  if (context.currentDB) {
+    functionStatement.body.body.push(esprima.parseScript(`const useDb = db.db("${context.currentDB}")`).body[0]);
+  } else {
+    functionStatement.body.body.push(esprima.parseScript('const useDb = db').body[0]);
+  }
+  if (queryCmd) {
+    functionStatement.body.body = functionStatement.body.body.concat(esprima.parseScript(queryCmd).body);
+  }
+  const prom = getPromiseStatement('returnData');
+  functionStatement.body.body.push(prom);
+  // add to promise callback
+  const body = prom.body[0].declarations[0].init.arguments[0].body.body;
+  let driverStatement = `const arrayData = useDb.collection('${collection}').${originFunName}(query`;
+  if (extraParam) {
+    driverStatement += `,${extraParam})`;
+  } else {
+    driverStatement += ')';
+  }
+  body.push(esprima.parseScript(driverStatement));
+  body.push(esprima.parseScript('resolve(arrayData)'));
+
+  functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
+  if (callFunctionParams) {
+    callFunctionParams = `${db}, ${callFunctionParams}`;
+  } else {
+    callFunctionParams = `${db}`;
+  }
+  const callStatement = createCallStatement(functionName, callFunctionParams);
+  return { functionStatement, functionName, callStatement };
+};
+
 module.exports = {
   getAwaitStatement,
   findDbName,
@@ -335,4 +418,5 @@ module.exports = {
   findSupportedStatement,
   getPromiseStatement,
   getSeparator,
+  createParameterizedFunction,
 };

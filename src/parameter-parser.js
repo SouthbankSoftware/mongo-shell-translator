@@ -4,6 +4,7 @@ const escodegen = require('escodegen');
 const findOperators = ['$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin', '$and', '$not', '$nor', '$or', '$exists', '$type', '$mod', '$regex', '$text', '$where', '$geoIntersects', '$geoWithin', '$near', '$nearSphere', '$all', '$elemMatch', '$size', '$bitsAllClear', '$bitsAllSet', '$bitsAnyClear', '$bitsAnySet', '$comment', '$meta', '$slice'];
 
 const capitalize = str => str.charAt(0).toUpperCase() + str.toLowerCase().slice(1);
+const capitalizeFirst = str => str.charAt(0).toUpperCase() + str.slice(1);
 
 const camelCase = (str) => {
   const string = str.toLowerCase().replace(/[^A-Za-z0-9]/g, ' ').split(' ')
@@ -131,4 +132,5 @@ module.exports = {
   parseQueryParameters,
   getParameterNumber,
   parseQueryManyParameters,
+  capitalizeFirst,
 };
