@@ -14,7 +14,7 @@ let ast = esprima.parseScript('db.find().test()//dd', {
 ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
 // console.log(ast);
 // Connection URL
-const url = 'mongodb://localhost:28017/test';
+const url = 'mongodb://localhost:27017/test';
 
 const aggregateTest = (db) => {
   // db.collection('explains').aggregate([], { explain: false, allowDiskUse: true, maxTimeMS: 100, bypassDocumentValidation: true }).toArray((err, docs) => {
@@ -129,17 +129,18 @@ results.then(r => {\
 });\
 ';
 
-function explainsUpdateMany(db, userNameLast, userNameLastUpdated, options) {
+function explainsDeleteOne(db, userNameLast) {
   const useDb = db.db('SampleCollections');
   const query = { 'user.name.last': userNameLast };
-  const update = { 'user.name.last': userNameLastUpdated };
   const returnData = new Promise((resolve) => {
-    const data = useDb.collection('explains').updateOne(query, { $set: update }, options);
-    resolve(data);
+    const arrayData = useDb.collection('explains').deleteOne(query);
+    resolve(arrayData);
   });
   return (returnData);
 }
 MongoClient.connect(url, async(err, db) => {
-  const doc = await db.db('test').collection('users').findOne({}, { fields: { _id: 0 } });
-  console.log(doc);
+  const results = explainsDeleteOne(db, 'Lee');
+  results.then((r) => {
+    console.log(JSON.stringify(r));
+  });
 });

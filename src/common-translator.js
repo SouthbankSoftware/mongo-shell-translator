@@ -332,6 +332,20 @@ const createCallStatement = (functionName, params) => {
   return esprima.parseScript(script);
 };
 
+const createPromiseStatement = (collection, funName, extraParam) => {
+  const prom = getPromiseStatement('returnData');
+  // add to promise callback
+  const body = prom.body[0].declarations[0].init.arguments[0].body.body;
+  let driverStatement = `const arrayData = useDb.collection('${collection}').${funName}(query`;
+  if (extraParam) {
+    driverStatement += `,${extraParam})`;
+  } else {
+    driverStatement += ')';
+  }
+  body.push(esprima.parseScript(driverStatement));
+  body.push(esprima.parseScript('resolve(arrayData)'));
+  return prom;
+};
 
 /**
  * create parameterized function
@@ -382,18 +396,8 @@ const createParameterizedFunction = (statement, updateExpression, params, contex
   if (queryCmd) {
     functionStatement.body.body = functionStatement.body.body.concat(esprima.parseScript(queryCmd).body);
   }
-  const prom = getPromiseStatement('returnData');
+  const prom = createPromiseStatement(collection, originFunName, extraParam);
   functionStatement.body.body.push(prom);
-  // add to promise callback
-  const body = prom.body[0].declarations[0].init.arguments[0].body.body;
-  let driverStatement = `const arrayData = useDb.collection('${collection}').${originFunName}(query`;
-  if (extraParam) {
-    driverStatement += `,${extraParam})`;
-  } else {
-    driverStatement += ')';
-  }
-  body.push(esprima.parseScript(driverStatement));
-  body.push(esprima.parseScript('resolve(arrayData)'));
 
   functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
   if (callFunctionParams) {
