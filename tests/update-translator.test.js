@@ -13,7 +13,7 @@ describe('test update translator', () => {
     const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('update', name);
     const { functionStatement, functionName, callStatement } = updateTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context());
-    assert.equal(callStatement.body.length, 1);
+    assert.equal(callStatement.body.length, 2);
     assert.equal(functionName, 'testUpdateOne');
     assert.equal(functionStatement.id.name, 'testUpdateOne');
 
