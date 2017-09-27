@@ -78,10 +78,11 @@ const createParameterizedFunction = (statement, updateExpression, params, contex
       functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
       const { queryObject, parameters } = parameterParser.parseQueryManyParameters(args[0]);
       insertDoc += `const doc = ${queryObject}`;
+      callFunctionParams = '{';
       parameters.forEach((p) => {
-        callFunctionParams += p.value;
-        callFunctionParams += ',';
+        callFunctionParams += `'${p.name}':${p.value},`;
       });
+      callFunctionParams += '},';
     }
     args.slice(1).forEach((arg, i) => {
       functionParams.push({ type: esprima.Syntax.Identifier, name: `arg${i + 1}` });

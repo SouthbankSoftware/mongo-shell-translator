@@ -86,11 +86,16 @@ const createParameterizedFunction = (statement, updateExpression, params, contex
       updateCmd += `const query = ${queryObject}${translator.getSeparator()}`;
       queryObject = parameterParser.parseQueryManyParameters(args[1], 'Updated').queryObject;
       updateCmd += `const update = ${queryObject}`;
+      callFunctionParams = '{';
       parameters.forEach((p) => {
-        functionParams.push({ type: esprima.Syntax.Identifier, name: p.name });
-        callFunctionParams += p.value;
-        callFunctionParams += ',';
+        callFunctionParams += `'${p.name}':${p.value},`;
       });
+      callFunctionParams += '},{';
+      parameters = parameterParser.parseQueryManyParameters(args[1], 'Updated').parameters;
+      parameters.forEach((p) => {
+        callFunctionParams += `'${p.name}Updated':${p.value},`;
+      });
+      callFunctionParams += '}';
     }
   } else {
     updateCmd = 'const query = {}';

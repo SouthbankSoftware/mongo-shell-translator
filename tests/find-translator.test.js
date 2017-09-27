@@ -53,13 +53,13 @@ describe('test find translator', () => {
       }'));
   });
   it('find translator more than 4 parmaters', () => {
-    const ast = esprima.parseScript('db.test.find({a:1, b:2, c:3, d:4, e:5})');
+    const ast = esprima.parseScript('db.test.find({a:1, b:2, c:3, d:4, e:5}, {_id:0}, 100)');
     const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('find', name);
     const { functionStatement, functionName, callStatement } = findTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context());
     assert.equal(callStatement.body.length, 2);
     assert.equal(functionName, 'testFind');
     assert.equal(functionStatement.id.name, 'testFind');
-    assert.equal(callStatement.body[0].declarations[0].init.arguments.length, 6);
+    assert.equal(callStatement.body[0].declarations[0].init.arguments.length, 3);
   });
 });

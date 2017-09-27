@@ -20,12 +20,26 @@ describe('test update translator', () => {
     ast = esprima.parseScript('db.test.udpate({"name": "joey"}, {"name":"mike"})');
   });
   it('update translator more than 4 parmaters', () => {
-    const ast = esprima.parseScript('db.test.update({"name":"joey","name":"mike","name":"mike","name":"mike","name":"a"}, {a:1})');
-    const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    let ast = esprima.parseScript('db.test.update({"name":"joey","name":"mike","name":"mike","name":"mike","name":"a"}, {a:1}, {multi:true})');
+    let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('update', name);
-    const { functionStatement, functionName, callStatement } = updateTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context(), name);
+    let { functionStatement, functionName, callStatement } = updateTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context(), name);
+    assert.equal(callStatement.body.length, 2);
+    assert.equal(functionName, 'testUpdateMany');
+    assert.equal(callStatement.body[0].declarations[0].init.arguments.length, 4);
+
+    ast = esprima.parseScript('db.test.update({"name":"joey","name":"mike","name":"mike","name":"mike","name":"a"}, {a:1})');
+    const s = commonTranslator.findSupportedStatement(ast.body[0]);
+    params = s.params;
+    name = s.name;
+    expression = s.expression;
+    assert.equal('update', name);
+    const fun = updateTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context(), name);
+    functionStatement = fun.functionStatement;
+    functionName = fun.functionName;
+    callStatement = fun.callStatement;
     assert.equal(callStatement.body.length, 2);
     assert.equal(functionName, 'testUpdateOne');
-    assert.equal(callStatement.body[0].declarations[0].init.arguments.length, 6);
+    assert.equal(callStatement.body[0].declarations[0].init.arguments.length, 3);
   });
 });
