@@ -123,7 +123,7 @@ results.then(r => {\
 });\
 results = usersFind(db, 5, "Lee", 1);\
 results.then(r => {\
-  r.forEach(doc => {\
+  r1.forEach(doc => {\
     console.log(JSON.stringify(doc));\
   });\
 });\
@@ -139,8 +139,9 @@ function testInsertOne(db, a) {
   return (returnData);
 }
 MongoClient.connect(url, async(err, db) => {
-  const results = testInsertOne(db, 1);
-  results.then((r) => {
-    console.log(JSON.stringify(r));
-  });
+  try {
+    eval(userFind);
+  } catch (err) {
+    console.error('got error ', err.message);
+  }
 });

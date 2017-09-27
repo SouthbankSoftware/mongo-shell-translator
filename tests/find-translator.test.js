@@ -6,6 +6,7 @@ const findTranslator = require('../src/find-translator.js');
 const commonTranslator = require('../src/common-translator');
 const esprima = require('esprima');
 const Context = require('../src/context');
+const escodegen = require('escodegen');
 
 describe('test find translator', () => {
   it('test get json expression of find command', () => {
@@ -41,5 +42,14 @@ describe('test find translator', () => {
     assert.equal(callStatement.body.length, 2);
     assert.equal(functionName, 'testFind');
     assert.equal(functionStatement.id.name, 'testFind');
+    assert.deepEqual(esprima.parseScript(escodegen.generate(functionStatement)), esprima.parseScript('function testFind(db) {\
+    const useDb = db;\
+    const query = {};\
+      const returnData = new Promise(resolve => {\
+        const arrayData = useDb.collection(\'test\').undefined(query);\
+      resolve(arrayData);\
+          });\
+          return returnData;\
+      }'));
   });
 });

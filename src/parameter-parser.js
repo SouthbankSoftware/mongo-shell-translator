@@ -58,7 +58,8 @@ const parseProperty = (property, many = false, parentKey = '', parameters = [], 
     } else {
       const camel = camelCase(keyValue);
       queryObject += `${keyName}: ${camel}${paramSuffix}`;
-    }!ignoreKey && parameters.push({ name: camelKeyValue, value: property.value.raw });
+    }
+    if (!ignoreKey) { parameters.push({ name: camelKeyValue, value: property.value.raw }); }
   } else if (property.value.type === esprima.Syntax.ObjectExpression) {
     queryObject += `${keyName}: ${parseObjectExpressionArgument(property.value, many, keyValue, parameters, paramSuffix)}`;
   } else if (property.value.type === esprima.Syntax.ArrayExpression) {
@@ -76,9 +77,14 @@ const parseProperty = (property, many = false, parentKey = '', parameters = [], 
       } else {
         const camel = camelCase(keyValue);
         queryObject += `${keyName}: ${camel}${paramSuffix}`;
-      }!ignoreKey && parameters.push({ name: camelKeyValue, value: escodegen.generate(property.value) });
+      }
+      if (!ignoreKey) {
+        parameters.push({ name: camelKeyValue, value: escodegen.generate(property.value) });
+      }
     } else {
-      !ignoreKey && parameters.push({ name: camelKeyValue, value: escodegen.generate(property.value) });
+      if (!ignoreKey) {
+        parameters.push({ name: camelKeyValue, value: escodegen.generate(property.value) });
+      }
       queryObject += `${keyName}: [`;
       property.value.elements.forEach((element, j) => {
         queryObject += `${parseObjectExpressionArgument(element, many, keyName, parameters)}`;
@@ -106,8 +112,11 @@ const parseObjectExpressionArgument = (arg, many = false, parentKey = '', parame
     queryObject += '}';
   } else if (arg.type === esprima.Syntax.ArrayExpression) {
     queryObject = '[';
-    arg.elements.forEach((element) => {
+    arg.elements.forEach((element, i) => {
       queryObject += parseObjectExpressionArgument(element, many, parentKey, parameters, paramSuffix);
+      if (i < arg.elements.length - 1) {
+        queryObject += ',';
+      }
     });
     queryObject += ']';
   }

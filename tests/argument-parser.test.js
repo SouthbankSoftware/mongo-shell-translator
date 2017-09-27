@@ -359,5 +359,15 @@ describe('argument parser test suite', () => {
     assert.equal(parameters.length, 1);
     assert.equal(parameters[0].name, 'userNameLast');
     assert.equal(parameters[0].value, '"joey"');
+
+    code = esprima.parseScript('db.test.insert([{"user.name.last": "joey"}, {"user.name.last": "yi"}])');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    parseRet = parameterParser.parseQueryManyParameters(expression.arguments[0]);
+    qCode = parseRet.queryObject;
+    parameters = parseRet.parameters;
+    assert.equal(qCode, '[{"user.name.last": q.userNameLast},{"user.name.last": q.userNameLast}]');
+    assert.equal(parameters.length, 2);
+    assert.equal(parameters[0].name, 'userNameLast');
+    assert.equal(parameters[0].value, '"joey"');
   });
 });
