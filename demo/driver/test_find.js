@@ -3,17 +3,6 @@ const esprima = require('esprima');
 const estraverse = require('estraverse');
 const escodegen = require('escodegen');
 
-let ast = esprima.parseScript('db.find().test()//dd', {
-  tolerant: true,
-  raw: true,
-  tokens: true,
-  range: true,
-  comment: true,
-});
-// console.log(ast);
-ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
-// console.log(ast);
-// Connection URL
 const url = 'mongodb://localhost:27017/test';
 
 const aggregateTest = (db) => {
@@ -81,17 +70,7 @@ const deleteTest = async(db) => {
   // const aaa = eval(" db.collection('explains').find().toArray().then((doc) => console.log(doc))");
   // console.log(aaa);
 };
-
-function testFind(db, userNameLast, fields, limit, skip, batchSize) {
-  const useDb = db.db('SampleCollections');
-  const query = { 'user.name.last': userNameLast };
-  const returnData = new Promise((resolve) => {
-    const arrayData = useDb.collection('explains').find(query).project({ _id: 0 }).limit(10).skip(1).batchSize(1000).toArray();
-    resolve(arrayData);
-  });
-  return (returnData);
-}
-let str = "function explainsFind(db, userNameLast, fields, limit, skip, batchSize) {\
+const str = "function explainsFind(db, userNameLast, fields, limit, skip, batchSize) {\
     const useDb = db.db('SampleCollections');\
     const query = { 'user.name.last': userNameLast };\
         const returnData = new Promise(resolve => {\
@@ -129,44 +108,75 @@ results.then(r => {\
 });\
 ';
 
-function testInsertOne(db, a) {
+function explainsFind(db, userNameLast, fields, limit, skip, batchSize) {
   const useDb = db.db('SampleCollections');
-  const doc = { a };
+  const query = { 'user.name.last': userNameLast };
   const returnData = new Promise((resolve) => {
-    const arrayData = useDb.collection('test').insertOne(doc);
+    const arrayData = useDb.collection('explains').find(query).project({ _id: 0 }).limit(10).skip(100).batchSize(1000).toArray();
     resolve(arrayData);
   });
   return (returnData);
 }
+
+function testFind(db) {
+  const useDb = db.db('SampleCollections');
+  const query = {};
+  const returnData = new Promise((resolve) => {
+    const arrayData = useDb.collection('test').find(query).limit(20).toArray();
+    resolve(arrayData);
+  });
+  return (returnData);
+}
+
+function testUpdateOne(db, name, nameUpdated, options) {
+  const useDb = db.db('SampleCollections');
+  const query = { name };
+  const update = { name: nameUpdated };
+  const returnData = new Promise((resolve) => {
+    const data = useDb.collection('test').updateOne(query, update, options);
+    resolve(data);
+  });
+  return (returnData);
+}
+
 MongoClient.connect(url, async(err, db) => {
-  try {
-    // eval(userFind);
-  } catch (err) {
-    console.error('got error ', err.message);
-  }
+  // const results = testFind(db);
+  // results.then((r) => {
+  //   r.forEach((doc) => {
+  //     console.log(JSON.stringify(doc));
+  //   });
+  // });
+
+  new Promise((resolve) => {
+    const results = explainsFind(db, 'Lee', 10, 100, 1000);
+    resolve(results);
+  }).then((r) => {
+    r.forEach((doc) => {
+      console.log(JSON.stringify(doc));
+    });
+    const results = testFind(db);
+    return results;
+  }).then((r) => {
+    r.forEach((doc) => {
+      console.log(JSON.stringify(doc));
+    });
+    const results = testFind(db);
+    return results;
+  }).then((r) => {
+    r.forEach((doc) => {
+      console.log(JSON.stringify(doc));
+    });
+    const results = testFind(db);
+    return results;
+  }).then((r) => {
+    r.forEach((doc) => {
+      console.log(JSON.stringify(doc));
+    });
+    const results = testUpdateOne(db, 'joey', 'mike', { multi: true });
+    return results;
+  }).then((r) => {
+    console.log(JSON.stringify(r));
+  }).catch((err) => {
+    console.error(err);
+  });
 });
-
-const _ = require('lodash');
-
-str = "function testFind(db) {\
-    const useDb = db.db('SampleCollections');\
-    const query = {};\
-        const returnData = new Promise(resolve => {\
-                const arrayData = useDb.collection('test').find(query).limit(20).toArray();\
-                resolve(arrayData);\
-    });\
-    return (returnData);\
-}";
-const str2 = "function testFind(db) {\
-    const useDb = db.db('SampleCollections');\
-    const query = {};\
-        const returnData = new Promise(resolve => {\
-                const arrayData = useDb.collection('test').find(query).limit(20).toArray();\
-                resolve(arrayData);\
-    });\
-    return (returnData);\
-}";
-const p1 = esprima.parseScript(str);
-const p2 = esprima.parseScript(str2);
-const e = _.isEqual(p1, p2);
-console.log(e);

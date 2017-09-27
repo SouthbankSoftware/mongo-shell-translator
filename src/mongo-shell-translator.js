@@ -81,7 +81,13 @@ class MongoShellTranslator {
         });
       }
       if (!existed) {
-        this.translatedStatements.push({ type: statement.type, function: statement.function, functionName: statement.functionName, call: [statement.call] });
+        this.translatedStatements.push({
+          type: statement.type,
+          function: statement.function,
+          translatorName: statement.translatorName,
+          functionName: statement.functionName,
+          call: [statement.call],
+        });
       } else {
         existed.call.push(statement.call);
       }
@@ -90,14 +96,100 @@ class MongoShellTranslator {
     }
   }
 
+  createStatementAfterPromise(name, promiseExpression, paramName) {
+    const newExp = {
+      type: esprima.Syntax.CallExpression,
+      callee: {
+        type: esprima.Syntax.MemberExpression,
+        object: promiseExpression,
+        property: {
+          type: esprima.Syntax.Identifier,
+          name,
+        },
+      },
+      arguments: [{
+        type: esprima.Syntax.ArrowFunctionExpression,
+        params: [{
+          type: esprima.Syntax.Identifier,
+          name: paramName,
+        }],
+        body: {
+          type: esprima.Syntax.BlockStatement,
+          body: [],
+        },
+      }],
+    };
+    return newExp;
+  }
+
+  createPromiseChain() {
+    const statements = [];
+    const exps = _.filter(this.translatedStatements, { type: esprima.Syntax.FunctionExpression });
+    if (exps.length > 1) {
+      // declare all functions first
+      exps.forEach((exp) => {
+        statements.push(exp.function);
+      });
+      // chain the promise calls
+      const promiseStatement = esprima.parseScript('new Promise((resolve) => {})');
+      let promiseExpression = promiseStatement.body[0].expression;
+      let promiseBody = promiseExpression.arguments[0].body.body;
+      let firstStat = true;
+      this.translatedStatements.forEach((exp) => {
+        if (exp.type === esprima.Syntax.FunctionExpression) {
+          exp.call.forEach((c) => {
+            promiseBody.push(c.body[0]);
+            const resultName = c.body[0].declarations[0].id.name;
+            if (firstStat) {
+              firstStat = false;
+              promiseBody.push(esprima.parseScript(`resolve(${resultName})`).body[0]);
+            } else {
+              promiseBody.push(esprima.parseScript(`function a(){ return ${resultName}}`).body[0].body.body[0]);
+            }
+            const newExp = this.createStatementAfterPromise('then', promiseExpression, 'r');
+            promiseStatement.body[0].expression = newExp;
+            promiseExpression = newExp;
+            promiseBody = newExp.arguments[0].body.body;
+            if (c.body[1].type === esprima.Syntax.ExpressionStatement) {
+              const st = c.body[1].expression.arguments[0].body.body[0];
+              promiseBody.push(st);
+            }
+          });
+        } else {
+          promiseBody.push(exp.value);
+        }
+      });
+      // add catch
+      const catchExp = this.createStatementAfterPromise('catch', promiseStatement.body[0].expression, 'err');
+      promiseStatement.body[0].expression = catchExp;
+      catchExp.arguments[0].body.body.push(esprima.parseScript('console.error(err)').body[0]);
+      statements.push(promiseStatement);
+    } else if (exps.length === 1) {
+      this.translatedStatements.forEach((statement) => {
+        if (statement.type === esprima.Syntax.FunctionExpression) {
+          statements.push(statement.function);
+          statement.call.forEach((call) => {
+            if (call) {
+              statements.push(call);
+            }
+          });
+        } else {
+          statements.push(statement.value);
+        }
+      });
+    }
+    return statements;
+  }
+
   generateCode() {
     const newAst = { type: 'Program', body: [] };
     const exps = _.filter(this.translatedStatements, { type: esprima.Syntax.FunctionExpression });
     const existedFunName = [];
+    const allFunNames = {};
     exps.forEach((exp) => {
-      console.log(exp);
       if (existedFunName.indexOf(exp.functionName) >= 0) {
-        exp.function.id.name = exp.function.id.name + (existedFunName.indexOf(exp.functionName) + 1);
+        exp.function.id.name = exp.function.id.name + (allFunNames[exp.functionName]);
+        allFunNames[exp.functionName] += 1;
         exp.call.forEach((c) => {
           if (c.body[0].type === esprima.Syntax.VariableDeclaration) {
             c.body[0].declarations[0].init.callee.name = exp.function.id.name;
@@ -105,20 +197,25 @@ class MongoShellTranslator {
         });
       } else {
         existedFunName.push(exp.functionName);
+        allFunNames[exp.functionName] = 1;
       }
     });
-    this.translatedStatements.forEach((statement) => {
-      if (statement.type === esprima.Syntax.FunctionExpression) {
-        newAst.body.push(statement.function);
-        statement.call.forEach((call) => {
-          if (call) {
-            newAst.body.push(call);
-          }
-        });
-      } else {
-        newAst.body.push(statement.value);
-      }
+    const statements = this.createPromiseChain();
+    statements.forEach((s) => {
+      newAst.body.push(s);
     });
+    // this.translatedStatements.forEach((statement) => {
+    //   if (statement.type === esprima.Syntax.FunctionExpression) {
+    //     newAst.body.push(statement.function);
+    //     statement.call.forEach((call) => {
+    //       if (call) {
+    //         newAst.body.push(call);
+    //       }
+    //     });
+    //   } else {
+    //     newAst.body.push(statement.value);
+    //   }
+    // });
     return generate(newAst);
   }
 
@@ -153,7 +250,13 @@ class MongoShellTranslator {
             if (dbName) {
               context.currentDB = currentDB;
             }
-            this.addStatement({ type: esprima.Syntax.FunctionExpression, function: functionStatement, call: callStatement, functionName });
+            this.addStatement({
+              type: esprima.Syntax.FunctionExpression,
+              function: functionStatement,
+              translatorName: name,
+              call: callStatement,
+              functionName,
+            });
           }
         } else {
           this.addStatement({ type: esprima.Syntax.ObjectExpression, value: statement });

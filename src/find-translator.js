@@ -38,8 +38,8 @@ const getJsonExpression = (params) => {
 };
 
 const createCallStatement = (functionName, params, context) => {
-  const script = `const results${context.numStatement}=${functionName}(${params}); \
-  results${context.numStatement}.then((r) => { \
+  const script = `const results=${functionName}(${params}); \
+  results.then((r) => { \
       r.forEach((doc) => {\
             console.log(JSON.stringify(doc));\
         });\
