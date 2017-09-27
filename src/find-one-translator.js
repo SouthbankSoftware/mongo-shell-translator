@@ -73,8 +73,12 @@ const createParameterizedFunction = (statement, findExpression, params, context,
       });
     } else {
       functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
-      const { queryObject } = parameterParser.parseQueryManyParameters(args[0]);
+      const { queryObject, parameters } = parameterParser.parseQueryManyParameters(args[0]);
       queryCmd += `const query = ${queryObject}`;
+      parameters.forEach((p) => {
+        callFunctionParams += p.value;
+        callFunctionParams += ',';
+      });
     }
   } else {
     queryCmd = 'const query = {}';
