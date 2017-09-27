@@ -1,4 +1,3 @@
-const commandName = require('./options').commandName;
 const _ = require('lodash');
 
 class Context {
@@ -32,9 +31,9 @@ class Context {
   }
 
   getFunctionName(funName) {
-    const functionName = funName + this.getCounter(funName);
-    this.increaseCounter(funName);
-    return functionName;
+    // const functionName = funName + this.getCounter(funName);
+    // this.increaseCounter(funName);
+    return funName;
   }
 }
 

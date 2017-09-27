@@ -91,7 +91,7 @@ function testFind(db, userNameLast, fields, limit, skip, batchSize) {
   });
   return (returnData);
 }
-const str = "function explainsFind(db, userNameLast, fields, limit, skip, batchSize) {\
+let str = "function explainsFind(db, userNameLast, fields, limit, skip, batchSize) {\
     const useDb = db.db('SampleCollections');\
     const query = { 'user.name.last': userNameLast };\
         const returnData = new Promise(resolve => {\
@@ -140,8 +140,33 @@ function testInsertOne(db, a) {
 }
 MongoClient.connect(url, async(err, db) => {
   try {
-    eval(userFind);
+    // eval(userFind);
   } catch (err) {
     console.error('got error ', err.message);
   }
 });
+
+const _ = require('lodash');
+
+str = "function testFind(db) {\
+    const useDb = db.db('SampleCollections');\
+    const query = {};\
+        const returnData = new Promise(resolve => {\
+                const arrayData = useDb.collection('test').find(query).limit(20).toArray();\
+                resolve(arrayData);\
+    });\
+    return (returnData);\
+}";
+const str2 = "function testFind(db) {\
+    const useDb = db.db('SampleCollections');\
+    const query = {};\
+        const returnData = new Promise(resolve => {\
+                const arrayData = useDb.collection('test').find(query).limit(20).toArray();\
+                resolve(arrayData);\
+    });\
+    return (returnData);\
+}";
+const p1 = esprima.parseScript(str);
+const p2 = esprima.parseScript(str2);
+const e = _.isEqual(p1, p2);
+console.log(e);

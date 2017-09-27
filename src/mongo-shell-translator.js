@@ -6,6 +6,7 @@ import insertTranslator from './insert-translator';
 import generate from './code-generator';
 import { parseOptions, commandName } from './options';
 import Context from './context';
+import _ from 'lodash';
 
 const esprima = require('esprima');
 const escodegen = require('escodegen');
@@ -32,6 +33,7 @@ class MongoShellTranslator {
   constructor(stype, connection) {
     this.sType = stype;
     this.connection = connection;
+    this.translatedStatements = [];
   }
 
   createConnectionStatement() {
@@ -67,6 +69,59 @@ class MongoShellTranslator {
     return scripts;
   }
 
+  addStatement(statement) {
+    if (statement.type === esprima.Syntax.FunctionExpression) {
+      const exps = _.filter(this.translatedStatements, { type: esprima.Syntax.FunctionExpression });
+      let existed;
+      if (exps) {
+        exps.forEach((exp) => {
+          if (_.isEqual(exp.function, statement.function)) {
+            existed = exp;
+          }
+        });
+      }
+      if (!existed) {
+        this.translatedStatements.push({ type: statement.type, function: statement.function, functionName: statement.functionName, call: [statement.call] });
+      } else {
+        existed.call.push(statement.call);
+      }
+    } else {
+      this.translatedStatements.push(statement);
+    }
+  }
+
+  generateCode() {
+    const newAst = { type: 'Program', body: [] };
+    const exps = _.filter(this.translatedStatements, { type: esprima.Syntax.FunctionExpression });
+    const existedFunName = [];
+    exps.forEach((exp) => {
+      console.log(exp);
+      if (existedFunName.indexOf(exp.functionName) >= 0) {
+        exp.function.id.name = exp.function.id.name + (existedFunName.indexOf(exp.functionName) + 1);
+        exp.call.forEach((c) => {
+          if (c.body[0].type === esprima.Syntax.VariableDeclaration) {
+            c.body[0].declarations[0].init.callee.name = exp.function.id.name;
+          }
+        });
+      } else {
+        existedFunName.push(exp.functionName);
+      }
+    });
+    this.translatedStatements.forEach((statement) => {
+      if (statement.type === esprima.Syntax.FunctionExpression) {
+        newAst.body.push(statement.function);
+        statement.call.forEach((call) => {
+          if (call) {
+            newAst.body.push(call);
+          }
+        });
+      } else {
+        newAst.body.push(statement.value);
+      }
+    });
+    return generate(newAst);
+  }
+
   translate(shell) {
     if (!shell) {
       return '';
@@ -76,7 +131,6 @@ class MongoShellTranslator {
     let ast = esprima.parseScript(filtered, parseOptions);
     ast = escodegen.attachComments(ast, ast.comments, ast.tokens);
     const statements = ast.body;
-    const newAst = { type: 'Program', body: [] };
     statements.forEach((statement) => {
       if (statement.type === esprima.Syntax.ExpressionStatement && statement.expression.type === esprima.Syntax.CallExpression &&
         statement.expression.callee.type === esprima.Syntax.Identifier && statement.expression.callee.name === 'dbKoda_USE_DATABASE_NAME') {
@@ -95,22 +149,18 @@ class MongoShellTranslator {
             if (dbName) {
               context.currentDB = dbName;
             }
-            const { functionStatement, callStatement } = translator.createParameterizedFunction(statement, expression, params, context, name);
+            const { functionStatement, callStatement, functionName } = translator.createParameterizedFunction(statement, expression, params, context, name);
             if (dbName) {
               context.currentDB = currentDB;
             }
-            newAst.body.push(functionStatement);
-            if (callStatement) {
-              newAst.body.push(callStatement);
-            }
+            this.addStatement({ type: esprima.Syntax.FunctionExpression, function: functionStatement, call: callStatement, functionName });
           }
         } else {
-          newAst.body.push(statement);
+          this.addStatement({ type: esprima.Syntax.ObjectExpression, value: statement });
         }
       }
     });
-    const code = generate(newAst);
-    return code;
+    return this.generateCode();
   }
 
 }
