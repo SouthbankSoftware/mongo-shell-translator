@@ -3,7 +3,7 @@ const esprima = require('esprima');
 const estraverse = require('estraverse');
 const escodegen = require('escodegen');
 
-const url = 'mongodb://localhost:27017/test';
+const url = 'mongodb://localhost:28017/test';
 
 const aggregateTest = (db) => {
   // db.collection('explains').aggregate([], { explain: false, allowDiskUse: true, maxTimeMS: 100, bypassDocumentValidation: true }).toArray((err, docs) => {
@@ -139,44 +139,13 @@ function testUpdateOne(db, name, nameUpdated, options) {
   return (returnData);
 }
 
-MongoClient.connect(url, async(err, db) => {
+MongoClient.connect(url, {}, async(err, db) => {
+  console.error(err);
+  console.log(db);
   // const results = testFind(db);
   // results.then((r) => {
   //   r.forEach((doc) => {
   //     console.log(JSON.stringify(doc));
   //   });
   // });
-
-  new Promise((resolve) => {
-    const results = explainsFind(db, 'Lee', 10, 100, 1000);
-    resolve(results);
-  }).then((r) => {
-    r.forEach((doc) => {
-      console.log(JSON.stringify(doc));
-    });
-    const results = testFind(db);
-    return results;
-  }).then((r) => {
-    r.forEach((doc) => {
-      console.log(JSON.stringify(doc));
-    });
-    const results = testFind(db);
-    return results;
-  }).then((r) => {
-    r.forEach((doc) => {
-      console.log(JSON.stringify(doc));
-    });
-    const results = testFind(db);
-    return results;
-  }).then((r) => {
-    r.forEach((doc) => {
-      console.log(JSON.stringify(doc));
-    });
-    const results = testUpdateOne(db, 'joey', 'mike', { multi: true });
-    return results;
-  }).then((r) => {
-    console.log(JSON.stringify(r));
-  }).catch((err) => {
-    console.error(err);
-  });
 });
