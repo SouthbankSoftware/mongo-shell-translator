@@ -159,7 +159,7 @@ class MongoShellTranslator {
       promiseStatement.body[0].expression = catchExp;
       catchExp.arguments[0].body.body.push(esprima.parseScript('console.error(err)').body[0]);
       statements.push(promiseStatement);
-    } else if (exps.length === 1) {
+    } else {
       this.translatedStatements.forEach((statement) => {
         if (statement.type === esprima.Syntax.FunctionExpression) {
           statements.push(statement.function);
