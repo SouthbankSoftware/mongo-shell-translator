@@ -69,6 +69,7 @@ const createParameterizedFunction = (statement, updateExpression, params, contex
       const parseParameters = (pName, arg, end = false, updateValue = false) => {
         const { queryObject, parameters } = parameterParser.parseQueryParameters(arg, updateValue ? 'Updated' : '');
         updateCmd += `const ${pName} = ${queryObject}${translator.getSeparator()}`;
+
         parameters.forEach((p, i) => {
           functionParams.push({ type: esprima.Syntax.Identifier, name: updateValue ? `${p.name}Updated` : p.name });
           callFunctionParams += p.value;
