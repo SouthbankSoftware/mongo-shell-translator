@@ -35,6 +35,7 @@ const createCallStatement = (functionName, params) => {
 
 const createParameterizedFunction = (statement, updateExpression, params, context, originFunName) => {
   let { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams } = commonTranslator.createParameters(statement, updateExpression, originFunName, context);
+  console.log('callFunctionParams', callFunctionParams);
   const functionStatement = commonTranslator.createFuncationStatement({ context, collection, functionName, originFunName, functionParams, extraParam, queryCmd, callFunctionParams, db });
   addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam });
   const callStatement = createCallStatement(functionName, callFunctionParams);

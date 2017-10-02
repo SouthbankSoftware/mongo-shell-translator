@@ -398,7 +398,7 @@ const createParameters = (statement, updateExpression, originFunName, context) =
   let functionName = `${collection}${parameterParser.capitalizeFirst(driverFunctionName)}`;
   functionName = context.getFunctionName(functionName);
   let queryCmd = '';
-  let callFunctionParams = ''; // the parameters we need to put on calling the generated function
+  let callFunctionParams = `${db},`; // the parameters we need to put on calling the generated function
   let extraParam = '';
   if (args.length > 0) {
     const pNum = parameterParser.getParameterNumber(args[0]);

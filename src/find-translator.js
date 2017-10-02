@@ -69,6 +69,9 @@ const createParameterizedFunction = (statement, findExpression, params, context,
     if (pNum <= 4) {
       const { queryObject, parameters } = parameterParser.parseQueryParameters(args[0]);
       queryCmd += `const query = ${queryObject}`;
+      if (parameters.length === 0) {
+        callFunctionParams += `${queryObject},`;
+      }
       parameters.forEach((p) => {
         functionParams.push({ type: esprima.Syntax.Identifier, name: p.name });
         callFunctionParams += p.value;
@@ -91,6 +94,7 @@ const createParameterizedFunction = (statement, findExpression, params, context,
   if (args.length > 1) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'fields' });
     projections = escodegen.generate(args[1]);
+    callFunctionParams += `${projections},`;
   }
   let limit;
   const limitParam = _.find(expParams, { name: 'limit' });

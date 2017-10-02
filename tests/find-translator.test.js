@@ -57,17 +57,31 @@ describe('test find translator', () => {
     assert.equal(callStatement.body.length, 2);
     assert.equal(functionName, 'testFind');
     assert.equal(functionStatement.id.name, 'testFind');
-    assert.equal(callStatement.body[0].declarations[0].init.arguments.length, 3);
+    assert.equal(callStatement.body[0].declarations[0].init.arguments.length, 4);
   });
   it('find translator extra parmaters', () => {
-    const ast = esprima.parseScript('db.test.find({a:1, b:2, c:3, d:4, e:5}, {_id:0}, 100, 10, 1)');
-    const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    let ast = esprima.parseScript('db.test.find({a:1, b:2, c:3, d:4, e:5}, {_id:0}, 100, 10, 1)');
+    let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('find', name);
-    const { functionStatement, functionName, callStatement } = findTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context());
+    let { functionStatement, functionName, callStatement } = findTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context());
     assert.equal(callStatement.body.length, 2);
     assert.equal(functionName, 'testFind');
     assert.equal(functionStatement.id.name, 'testFind');
-    assert.equal(callStatement.body[0].declarations[0].init.arguments.length, 5);
+    assert.equal(callStatement.body[0].declarations[0].init.arguments.length, 6);
     assert.equal(escodegen.generate(functionStatement.body.body[2].body[0].declarations[0].init.arguments[0].body.body[0].body[0]), 'const arrayData = useDb.collection(\'test\').undefined(query).project({ _id: 0 }).limit(limit).skip(skip).batchSize(batchSize);');
+    assert.equal(escodegen.generate(callStatement.body[0]), escodegen.generate(esprima.parseScript('const results = testFind(db, {\'a\': 1,    \'b\': 2,    \'c\': 3,    \'d\': 4,    \'e\': 5}, { _id: 0 }, 100, 10, 1);')));
+
+    ast = esprima.parseScript('db.test.find({}, {})');
+    let statement = commonTranslator.findSupportedStatement(ast.body[0]);
+    params = statement.params;
+    expression = statement.expression;
+    let funStatement = findTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context());
+    functionStatement = funStatement.functionStatement;
+    callStatement = funStatement.callStatement;
+    functionName = funStatement.functionName;
+    assert.equal(functionStatement.params[0].name, 'db');
+    assert.equal(functionStatement.params[1].name, 'fields');
+    assert.equal(functionStatement.params.length, 2);
+    assert.equal(escodegen.generate(callStatement.body[0]), 'const results = testFind(db, {}, {});');
   });
 });
