@@ -405,6 +405,9 @@ const createParameters = (statement, updateExpression, originFunName, context) =
     if (pNum <= 4) {
       const { queryObject, parameters } = parameterParser.parseQueryParameters(args[0]);
       queryCmd += `const query = ${queryObject}`;
+      if (parameters.length === 0) {
+        callFunctionParams += `${queryObject},`;
+      }
       parameters.forEach((p) => {
         functionParams.push({ type: esprima.Syntax.Identifier, name: p.name });
         callFunctionParams += p.value;

@@ -68,7 +68,14 @@ const createParameterizedFunction = (statement, updateExpression, params, contex
     const pNum = parameterParser.getParameterNumber(args[0]);
     if (pNum <= 4) {
       const { queryObject, parameters } = parameterParser.parseQueryParameters(args[0]);
-      insertDoc += `const doc = ${queryObject}`;
+
+      if (parameters.length === 0) {
+        callFunctionParams += `${queryObject},`;
+        functionParams.push({ type: esprima.Syntax.Identifier, name: 'd' });
+        insertDoc += 'const doc = d';
+      } else {
+        insertDoc += `const doc = ${queryObject}`;
+      }
       parameters.forEach((p) => {
         functionParams.push({ type: esprima.Syntax.Identifier, name: p.name });
         callFunctionParams += p.value;
