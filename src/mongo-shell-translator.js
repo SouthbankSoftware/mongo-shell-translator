@@ -201,18 +201,6 @@ class MongoShellTranslator {
     statements.forEach((s) => {
       newAst.body.push(s);
     });
-    // this.translatedStatements.forEach((statement) => {
-    //   if (statement.type === esprima.Syntax.FunctionExpression) {
-    //     newAst.body.push(statement.function);
-    //     statement.call.forEach((call) => {
-    //       if (call) {
-    //         newAst.body.push(call);
-    //       }
-    //     });
-    //   } else {
-    //     newAst.body.push(statement.value);
-    //   }
-    // });
     return generate(newAst);
   }
 

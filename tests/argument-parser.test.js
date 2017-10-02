@@ -382,4 +382,28 @@ describe('argument parser test suite', () => {
     assert.equal(parameters[0].name, 'userNameLast');
     assert.equal(parameters[0].value, 'name');
   });
+
+  it('test parse nested and or query parameter', () => {
+    let code = esprima.parseScript('db.test.find({  "$and":[ { "Category": "apple"}]})');
+    let { expression } = translator.findSupportedStatement(code.body[0]);
+    let parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
+    let qCode = parseRet.queryObject;
+    let parameters = parseRet.parameters;
+    assert.equal(qCode, '{"$and": [{"Category": category}]}');
+    assert.equal(parameters.length, 1);
+    assert.equal(parameters[0].name, 'category');
+    assert.equal(parameters[0].value, '"apple"');
+
+    code = esprima.parseScript('db.test.find({  "$and":[ { "Category": { $eq: "Family" } }, { "Rating": { $ne: "R" } }]})');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
+    qCode = parseRet.queryObject;
+    parameters = parseRet.parameters;
+    assert.equal(qCode, '{"$and": [{"Category": {$eq: category}},{"Rating": {$ne: rating}}]}');
+    assert.equal(parameters.length, 2);
+    assert.equal(parameters[0].name, 'category');
+    assert.equal(parameters[0].value, '"Family"');
+    assert.equal(parameters[1].name, 'rating');
+    assert.equal(parameters[1].value, '"R"');
+  });
 });
