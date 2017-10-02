@@ -363,13 +363,24 @@ const createPromiseStatement = (collection, funName, extraParam) => {
   return prom;
 };
 
-/**
- * create parameterized function
- *
- * @param {*} statement
- * @param {*} updateExpression the update expression inside the statement
- */
-const createParameterizedFunction = (statement, updateExpression, params, context, originFunName) => {
+const createFuncationStatement = (context, collection, functionName, originFunName, functionParams, extraParam, queryCmd) => {
+  const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
+  if (context.currentDB) {
+    functionStatement.body.body.push(esprima.parseScript(`const useDb = db.db("${context.currentDB}")`).body[0]);
+  } else {
+    functionStatement.body.body.push(esprima.parseScript('const useDb = db').body[0]);
+  }
+  if (queryCmd) {
+    functionStatement.body.body = functionStatement.body.body.concat(esprima.parseScript(queryCmd).body);
+  }
+  const prom = createPromiseStatement(collection, originFunName, extraParam);
+  functionStatement.body.body.push(prom);
+
+  functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
+  return functionStatement;
+};
+
+const createParameters = (statement, updateExpression, originFunName, context) => {
   const db = findDbName(statement);
   const collection = findCollectionName(statement);
   const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
@@ -408,19 +419,18 @@ const createParameterizedFunction = (statement, updateExpression, params, contex
   } else {
     queryCmd = 'const query = {}';
   }
-  const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
-  if (context.currentDB) {
-    functionStatement.body.body.push(esprima.parseScript(`const useDb = db.db("${context.currentDB}")`).body[0]);
-  } else {
-    functionStatement.body.body.push(esprima.parseScript('const useDb = db').body[0]);
-  }
-  if (queryCmd) {
-    functionStatement.body.body = functionStatement.body.body.concat(esprima.parseScript(queryCmd).body);
-  }
-  const prom = createPromiseStatement(collection, originFunName, extraParam);
-  functionStatement.body.body.push(prom);
+  return { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams };
+};
 
-  functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
+/**
+ * create parameterized function
+ *
+ * @param {*} statement
+ * @param {*} updateExpression the update expression inside the statement
+ */
+const createParameterizedFunction = (statement, updateExpression, params, context, originFunName) => {
+  let { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams } = createParameters(statement, updateExpression, originFunName, context);
+  const functionStatement = createFuncationStatement(context, collection, functionName, originFunName, functionParams, extraParam, queryCmd);
   if (callFunctionParams) {
     callFunctionParams = `${db}, ${callFunctionParams}`;
   } else {
@@ -444,4 +454,5 @@ module.exports = {
   getPromiseStatement,
   getSeparator,
   createParameterizedFunction,
+  createParameters,
 };

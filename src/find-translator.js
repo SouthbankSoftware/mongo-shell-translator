@@ -145,15 +145,15 @@ const createParameterizedFunction = (statement, findExpression, params, context,
     queryStatement += `.project(${projections})`;
   }
   if (limit) {
-    queryStatement += `.limit(${limit})`;
+    queryStatement += '.limit(limit)';
   } else if (originFunName === 'find') {
     queryStatement += '.limit(20)';
   }
   if (skip) {
-    queryStatement += `.skip(${skip})`;
+    queryStatement += '.skip(skip)';
   }
   if (batchSize) {
-    queryStatement += `.batchSize(${batchSize})`;
+    queryStatement += '.batchSize(batchSize)';
   }
   if (originFunName === 'find') {
     queryStatement += '.toArray()';

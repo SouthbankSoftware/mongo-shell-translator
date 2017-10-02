@@ -29,6 +29,7 @@
     "no-case-declarations": "off",
     "no-multi-str": "off",
     "no-unused-expressions": "off",
-    "max-len": "off"
+    "max-len": "off",
+    "prefer-const": "off"
   }
 }
