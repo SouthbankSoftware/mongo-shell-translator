@@ -49,6 +49,7 @@ describe('test find translator', () => {
           return returnData;\
       }'));
   });
+
   it('find translator more than 4 parmaters', () => {
     const ast = esprima.parseScript('db.test.find({a:1, b:2, c:3, d:4, e:5}, {_id:0}, 100)');
     const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
@@ -59,6 +60,7 @@ describe('test find translator', () => {
     assert.equal(functionStatement.id.name, 'testFind');
     assert.equal(callStatement.body[0].declarations[0].init.arguments.length, 4);
   });
+
   it('find translator extra parmaters', () => {
     let ast = esprima.parseScript('db.test.find({a:1, b:2, c:3, d:4, e:5}, {_id:0}, 100, 10, 1)');
     let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
@@ -83,5 +85,19 @@ describe('test find translator', () => {
     assert.equal(functionStatement.params[1].name, 'fields');
     assert.equal(functionStatement.params.length, 2);
     assert.equal(escodegen.generate(callStatement.body[0]), 'const results = testFind(db, {}, {});');
+  });
+
+  it('find parameter use variable', () => {
+    let ast = esprima.parseScript('db.test.find({a:var1})');
+    let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('find', name);
+    let { functionStatement, functionName, callStatement } = findTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context());
+    assert.equal(callStatement.body.length, 2);
+    assert.equal(functionName, 'testFind');
+    assert.equal(callStatement.body[0].declarations[0].init.arguments.length, 2);
+    assert.equal(functionStatement.params.length, 2);
+    assert.equal(functionStatement.params[0].name, 'db');
+    assert.equal(functionStatement.params[1].name, 'a');
+    assert.equal(escodegen.generate(callStatement.body[0]), 'const results = testFind(db, var1);');
   });
 });
