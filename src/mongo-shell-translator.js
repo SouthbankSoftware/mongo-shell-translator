@@ -3,6 +3,7 @@ import findTranslator from './find-translator';
 import findOneTranslator from './find-one-translator';
 import updateTranslator from './update-translator';
 import insertTranslator from './insert-translator';
+import aggregateTranslator from './aggregate-translator';
 import generate from './code-generator';
 import { parseOptions, commandName } from './options';
 import Context from './context';
@@ -26,6 +27,7 @@ const translators = {
   [commandName.insert]: insertTranslator,
   [commandName.insertOne]: insertTranslator,
   [commandName.insertMany]: insertTranslator,
+  [commandName.aggregate]: aggregateTranslator,
 };
 
 class MongoShellTranslator {

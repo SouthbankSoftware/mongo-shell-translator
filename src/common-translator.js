@@ -363,7 +363,7 @@ const createPromiseStatement = (collection, funName, extraParam) => {
   return prom;
 };
 
-const createFuncationStatement = (context, collection, functionName, originFunName, functionParams, extraParam, queryCmd) => {
+const createFuncationStatement = ({ context, functionName, functionParams, queryCmd }) => {
   const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
   if (context.currentDB) {
     functionStatement.body.body.push(esprima.parseScript(`const useDb = db.db("${context.currentDB}")`).body[0]);
@@ -373,11 +373,20 @@ const createFuncationStatement = (context, collection, functionName, originFunNa
   if (queryCmd) {
     functionStatement.body.body = functionStatement.body.body.concat(esprima.parseScript(queryCmd).body);
   }
+
+  return functionStatement;
+};
+
+const addPromiseToFunction = ({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam }) => {
   const prom = createPromiseStatement(collection, originFunName, extraParam);
   functionStatement.body.body.push(prom);
 
   functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
-  return functionStatement;
+  if (callFunctionParams) {
+    callFunctionParams = `${db}, ${callFunctionParams}`;
+  } else {
+    callFunctionParams = `${db}`;
+  }
 };
 
 const createParameters = (statement, updateExpression, originFunName, context) => {
@@ -430,12 +439,8 @@ const createParameters = (statement, updateExpression, originFunName, context) =
  */
 const createParameterizedFunction = (statement, updateExpression, params, context, originFunName) => {
   let { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams } = createParameters(statement, updateExpression, originFunName, context);
-  const functionStatement = createFuncationStatement(context, collection, functionName, originFunName, functionParams, extraParam, queryCmd);
-  if (callFunctionParams) {
-    callFunctionParams = `${db}, ${callFunctionParams}`;
-  } else {
-    callFunctionParams = `${db}`;
-  }
+  const functionStatement = createFuncationStatement({ context, collection, functionName, originFunName, functionParams, extraParam, queryCmd, callFunctionParams, db });
+  addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam });
   const callStatement = createCallStatement(functionName, callFunctionParams);
   return { functionStatement, functionName, callStatement };
 };
@@ -455,4 +460,8 @@ module.exports = {
   getSeparator,
   createParameterizedFunction,
   createParameters,
+  createPromiseStatement,
+  createFuncationStatement,
+  createCallStatement,
+  addPromiseToFunction,
 };
