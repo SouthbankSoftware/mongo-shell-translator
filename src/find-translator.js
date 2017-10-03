@@ -140,6 +140,12 @@ const createParameterizedFunction = (statement, findExpression, params, context,
       callFunctionParams += `${batchSize},`;
     }
   }
+  const sortParam = _.find(expParams, { name: 'sort' });
+  if (sortParam) {
+    functionParams.push({ type: esprima.Syntax.Identifier, name: 'sort' });
+    callFunctionParams += `${sortParam.parameters},`;
+  }
+
   const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
   const prom = translator.getPromiseStatement('returnData');
   const body = prom.body[0].declarations[0].init.arguments[0].body.body;
@@ -163,6 +169,9 @@ const createParameterizedFunction = (statement, findExpression, params, context,
   }
   if (batchSize) {
     queryStatement += '.batchSize(batchSize)';
+  }
+  if (sortParam) {
+    queryStatement += '.sort(sort)';
   }
   if (originFunName === 'find') {
     queryStatement += '.toArray()';
