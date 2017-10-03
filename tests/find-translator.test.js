@@ -136,4 +136,11 @@ describe('test find translator', () => {
     assert.equal(fun.functionName, 'col1FindOne');
     assert.equal(escodegen.generate(fun.callStatement.body[0]), 'const results = col1FindOne(db, var1);');
   });
+
+  it('test parse sort for find', () => {
+    let ast = esprima.parseScript('db.getSiblingDB("test").getCollection("col1").find({a:var1}).sort()');
+    let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('find', name);
+    console.log(escodegen.generate(expression));
+  });
 });
