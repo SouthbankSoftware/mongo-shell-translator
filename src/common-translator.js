@@ -114,14 +114,18 @@ const findDbName = (statement) => {
 
 const findCollectionName = (statement) => {
   let root = null;
+  let parent = null;
   if (statement.type === esprima.Syntax.ExpressionStatement) {
     if (statement.expression.type === esprima.Syntax.AssignmentExpression) {
       root = statement.expression.right.callee;
+      parent = statement.expression.right;
     } else if (statement.expression.type === esprima.Syntax.CallExpression) {
       root = statement.expression.callee;
+      parent = statement.expression;
     }
   } else if (statement.type === esprima.Syntax.VariableDeclaration) {
     root = statement.declarations[0].init.callee;
+    parent = statement.declarations[0].init;
   }
   do {
     if (root && root.type === esprima.Syntax.MemberExpression) {
@@ -132,10 +136,20 @@ const findCollectionName = (statement) => {
         break;
       } else if (root.object.type === esprima.Syntax.CallExpression) {
         if (root.object.callee.property.name === 'getSiblingDB') {
+          if (root.property.name === 'getCollection' && parent &&
+            parent.type === esprima.Syntax.CallExpression &&
+            parent.arguments) {
+            if (parent.arguments.length > 0) {
+              return parent.arguments[0].value;
+            }
+            return undefined;
+          }
           return root.property.name;
         }
+        parent = root.object;
         root = root.object.callee;
       } else {
+        parent = root;
         root = root.object;
       }
     } else {
@@ -299,6 +313,12 @@ const findSupportedStatement = (statement) => {
       root.object.object.callee.property.name === 'getSiblingDB' &&
       root.object.object.arguments.length > 0) {
       dbName = root.object.object.arguments[0].value;
+    } else if (root && root.type === esprima.Syntax.MemberExpression &&
+      root.object && root.object.type === esprima.Syntax.CallExpression &&
+      root.object.callee && root.object.callee.type === esprima.Syntax.MemberExpression &&
+      root.object.callee.property.name === 'getCollection' &&
+      root.object.callee.object && root.object.callee.object.arguments.length > 0) {
+      dbName = root.object.callee.object.arguments[0].value;
     }
     if (root && root.type === esprima.Syntax.MemberExpression &&
       root.property.type === esprima.Syntax.Identifier) {

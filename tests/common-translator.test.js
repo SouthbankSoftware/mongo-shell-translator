@@ -49,10 +49,21 @@ describe('test common translator', () => {
     name = commonTranslator.findCollectionName(ast.body[0]);
     assert.equal(name, 'SampleCollections');
 
-
     ast = esprima.parseScript('i = db.SampleCollections.find({}, {})');
     name = commonTranslator.findCollectionName(ast.body[0]);
     assert.equal(name, 'SampleCollections');
+
+    ast = esprima.parseScript('i = db.getSiblingDB("SampleCollections").test.find({}, {})');
+    name = commonTranslator.findCollectionName(ast.body[0]);
+    assert.equal(name, 'test');
+
+    ast = esprima.parseScript('i = db.getSiblingDB("SampleCollections").getCollection("test1").find({}, {})');
+    name = commonTranslator.findCollectionName(ast.body[0]);
+    assert.equal(name, 'test1');
+
+    ast = esprima.parseScript('i = db.getSiblingDB("SampleCollections").getCollection().find({}, {})');
+    name = commonTranslator.findCollectionName(ast.body[0]);
+    assert.equal(name, undefined);
   });
 
   it('test find supported statement', () => {
@@ -135,5 +146,14 @@ describe('test common translator', () => {
     assert.equal(supported.dbName, undefined);
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
     assert.equal(supported.expression.arguments.length, 3);
+
+    ast = esprima.parseScript('var i = db.getSiblingDB("SampleCollections").getCollection("test").insert({}, {}, {})');
+    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal(supported.name, 'insert');
+    assert.equal(supported.dbName, 'SampleCollections');
+    assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
+    assert.equal(supported.expression.arguments.length, 3);
+    let colName = commonTranslator.findCollectionName(ast.body[0]);
+    assert.equal(colName, 'test');
   });
 });
