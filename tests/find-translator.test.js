@@ -4,6 +4,7 @@ const commonTranslator = require('../src/common-translator');
 const esprima = require('esprima');
 const Context = require('../src/context');
 const escodegen = require('escodegen');
+const findOneTranslator = require('../src/find-one-translator');
 
 describe('test find translator', () => {
   it('test get json expression of find command', () => {
@@ -100,5 +101,39 @@ describe('test find translator', () => {
     assert.equal(functionStatement.params[0].name, 'db');
     assert.equal(functionStatement.params[1].name, 'a');
     assert.equal(escodegen.generate(callStatement.body[0]), 'const results = testFind(db, var1);');
+  });
+
+  it('test find with getSiblingDB and getCollection', () => {
+    let ast = esprima.parseScript('db.getSiblingDB("test").getCollection("col1").find({a:var1})');
+    let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('find', name);
+    let { functionName, callStatement } = findTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context());
+    assert.equal(callStatement.body.length, 2);
+    assert.equal(functionName, 'col1Find');
+    assert.equal(escodegen.generate(callStatement.body[0]), 'const results = col1Find(db, var1);');
+
+    ast = esprima.parseScript('db.getSiblingDB("test").col1.find({a:var1})');
+    let supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    let fun = findTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context());
+    assert.equal(fun.callStatement.body.length, 2);
+    assert.equal(fun.functionName, 'col1Find');
+    assert.equal(escodegen.generate(fun.callStatement.body[0]), 'const results = col1Find(db, var1);');
+  });
+
+  it('test findOne with getSiblingDB and getCollection', () => {
+    let ast = esprima.parseScript('db.getSiblingDB("test").getCollection("col1").findOne({a:var1})');
+    let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('findOne', name);
+    let { functionName, callStatement } = findOneTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context());
+    assert.equal(callStatement.body.length, 2);
+    assert.equal(functionName, 'col1FindOne');
+    assert.equal(escodegen.generate(callStatement.body[0]), 'const results = col1FindOne(db, var1);');
+
+    ast = esprima.parseScript('db.getSiblingDB("test").col1.findOne({a:var1})');
+    let supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    let fun = findOneTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context());
+    assert.equal(fun.callStatement.body.length, 2);
+    assert.equal(fun.functionName, 'col1FindOne');
+    assert.equal(escodegen.generate(fun.callStatement.body[0]), 'const results = col1FindOne(db, var1);');
   });
 });

@@ -42,4 +42,21 @@ describe('test delete translator', () => {
     assert.equal(functionStatement.params[1].name, 'name');
     assert.equal(escodegen.generate(callStatement.body[0]), 'const results = testDeleteMany(db, userName);');
   });
+
+  it('test delete with getSiblingDB and getCollection', () => {
+    let ast = esprima.parseScript('db.getSiblingDB("test").getCollection("col1").deleteOne({a:var1})');
+    let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('deleteOne', name);
+    let { functionName, callStatement } = commonTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context(), name);
+    assert.equal(callStatement.body.length, 2);
+    assert.equal(functionName, 'col1DeleteOne');
+    assert.equal(escodegen.generate(callStatement.body[0]), 'const results = col1DeleteOne(db, var1);');
+
+    ast = esprima.parseScript('db.getSiblingDB("test").col1.deleteMany({b:true})');
+    let supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    let fun = commonTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context(), supported.name);
+    assert.equal(fun.callStatement.body.length, 2);
+    assert.equal(fun.functionName, 'col1DeleteMany');
+    assert.equal(escodegen.generate(fun.callStatement.body[0]), 'const results = col1DeleteMany(db, true);');
+  });
 });

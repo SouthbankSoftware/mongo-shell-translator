@@ -59,7 +59,6 @@ describe('test update translator', () => {
     assert.equal(escodegen.generate(callStatement.body[0]), 'const results = testUpdateOne(db, var1, var2);');
   });
 
-
   it('test empty parameter value', () => {
     let ast = esprima.parseScript('db.test.update({}, {})');
     let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
@@ -71,5 +70,22 @@ describe('test update translator', () => {
     assert.equal(functionStatement.params.length, 1);
     assert.equal(functionStatement.params[0].name, 'db');
     assert.equal(escodegen.generate(callStatement.body[0]), 'const results = testUpdateOne(db);');
+  });
+
+  it('test update with getSiblingDB and getCollection', () => {
+    let ast = esprima.parseScript('db.getSiblingDB("test").getCollection("col1").update({a:var1}, {b:var2})');
+    let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('update', name);
+    let { functionName, callStatement } = updateTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context(), name);
+    assert.equal(callStatement.body.length, 2);
+    assert.equal(functionName, 'col1UpdateOne');
+    assert.equal(escodegen.generate(callStatement.body[0]), 'const results = col1UpdateOne(db, var1, var2);');
+
+    ast = esprima.parseScript('db.getSiblingDB("test").col1.update({a:var1}, {b:true}, {multi:true})');
+    let supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    let fun = updateTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context(), supported.name);
+    assert.equal(fun.callStatement.body.length, 2);
+    assert.equal(fun.functionName, 'col1UpdateMany');
+    assert.equal(escodegen.generate(fun.callStatement.body[0]), 'const results = col1UpdateMany(db, var1, true, { multi: true });');
   });
 });

@@ -37,9 +37,9 @@ const getJsonExpression = (params) => {
   });
 };
 
-const createCallStatement = (functionName, params, context) => {
-  const script = `const results${context.numStatement}=${functionName}(${params}); \
-  results${context.numStatement}.then((r) => { \
+const createCallStatement = (functionName, params) => {
+  const script = `const results=${functionName}(${params}); \
+  results.then((r) => { \
           console.log(JSON.stringify(r));\
   });`;
   return esprima.parseScript(script);
@@ -56,7 +56,7 @@ const createCallStatement = (functionName, params, context) => {
 const createParameterizedFunction = (statement, findExpression, params, context, originFunName) => {
   const db = translator.findDbName(statement);
   const collection = translator.findCollectionName(statement);
-  const functionName = context.getFunctionName(`${collection}Find`);
+  const functionName = context.getFunctionName(`${collection}FindOne`);
   const args = findExpression.arguments;
   const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
   let queryCmd = '';
