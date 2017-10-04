@@ -139,8 +139,19 @@ describe('test find translator', () => {
 
   it('test parse sort for find', () => {
     let ast = esprima.parseScript('db.getSiblingDB("test").getCollection("col1").find({a:var1}).sort()');
-    let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
-    assert.equal('find', name);
-    console.log(escodegen.generate(expression));
+    let supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('find', supported.name);
+    let fun = findTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context(), supported.name);
+    assert.equal(fun.functionStatement.params.length, 3);
+    assert.equal(fun.functionStatement.params[2].name, 'sort');
+    assert.equal(escodegen.generate(fun.callStatement.body[0]), 'const results = col1Find(db, var1, {});');
+
+    ast = esprima.parseScript('db.getSiblingDB("test").getCollection("col1").find({a:var1}).sort({a:1})');
+    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('find', supported.name);
+    fun = findTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context(), supported.name);
+    assert.equal(fun.functionStatement.params.length, 3);
+    assert.equal(fun.functionStatement.params[2].name, 'sort');
+    assert.equal(escodegen.generate(fun.callStatement.body[0]), 'const results = col1Find(db, var1, { a: 1 });');
   });
 });

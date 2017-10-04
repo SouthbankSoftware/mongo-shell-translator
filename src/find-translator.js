@@ -143,6 +143,9 @@ const createParameterizedFunction = (statement, findExpression, params, context,
   const sortParam = _.find(expParams, { name: 'sort' });
   if (sortParam) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'sort' });
+    if (!sortParam.parameters || sortParam.parameters.length === 0) {
+      sortParam.parameters = '{}';
+    }
     callFunctionParams += `${sortParam.parameters},`;
   }
 
