@@ -154,4 +154,14 @@ describe('test find translator', () => {
     assert.equal(fun.functionStatement.params[2].name, 'sort');
     assert.equal(escodegen.generate(fun.callStatement.body[0]), 'const results = col1Find(db, var1, { a: 1 });');
   });
+
+  it('test parse count for find', () => {
+    let ast = esprima.parseScript('db.getSiblingDB("test").getCollection("col1").find({a:var1}).count()');
+    let supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('find', supported.name);
+    let fun = findTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context(), supported.name);
+    assert.equal(fun.functionStatement.params.length, 3);
+    assert.equal(fun.functionStatement.params[2].name, 'count');
+    assert.equal(escodegen.generate(fun.callStatement.body[0]), 'const results = col1Find(db, var1, {});');
+  });
 });

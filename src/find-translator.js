@@ -97,7 +97,6 @@ const createParameterizedFunction = (statement, findExpression, params, context,
   let projections = '';
   if (args.length > 1) {
     functionParams.push({ type: esprima.Syntax.Identifier, name: 'fields' });
-    // projections = escodegen.generate(args[1]);
     projections = 'fields';
     callFunctionParams += `${escodegen.generate(args[1])},`;
   }
@@ -140,15 +139,18 @@ const createParameterizedFunction = (statement, findExpression, params, context,
       callFunctionParams += `${batchSize},`;
     }
   }
-  const sortParam = _.find(expParams, { name: 'sort' });
-  if (sortParam) {
-    functionParams.push({ type: esprima.Syntax.Identifier, name: 'sort' });
-    if (!sortParam.parameters || sortParam.parameters.length === 0) {
-      sortParam.parameters = '{}';
-    }
-    callFunctionParams += `${sortParam.parameters},`;
-  }
 
+  let cursorParams = '';
+  expParams.forEach((p) => {
+    if (p.name !== 'batchSize' && p.name !== 'limit' && p.name !== 'skip') {
+      functionParams.push({ type: esprima.Syntax.Identifier, name: p.name });
+      if (!p.parameters || p.parameters.length === 0) {
+        p.parameters = '{}';
+      }
+      callFunctionParams += `${p.parameters},`;
+      cursorParams += `.${p.name}(${p.anme})`;
+    }
+  });
   const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
   const prom = translator.getPromiseStatement('returnData');
   const body = prom.body[0].declarations[0].init.arguments[0].body.body;
@@ -173,8 +175,8 @@ const createParameterizedFunction = (statement, findExpression, params, context,
   if (batchSize) {
     queryStatement += '.batchSize(batchSize)';
   }
-  if (sortParam) {
-    queryStatement += '.sort(sort)';
+  if (cursorParams) {
+    queryStatement += cursorParams;
   }
   if (originFunName === 'find') {
     queryStatement += '.toArray()';
