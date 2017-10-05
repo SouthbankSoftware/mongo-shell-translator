@@ -406,4 +406,23 @@ describe('argument parser test suite', () => {
     assert.equal(parameters[1].name, 'rating');
     assert.equal(parameters[1].value, '"R"');
   });
+
+  it('test parse array parameter', () => {
+    let code = esprima.parseScript('db.test.find([{a:1}, {b:2}])');
+    let { expression } = translator.findSupportedStatement(code.body[0]);
+    let parseRets = parameterParser.parseArrayParameters(expression.arguments[0]);
+    assert.equal(parseRets.length, 2);
+    let qCode = parseRets[0].queryObject;
+    let parameters = parseRets[0].parameters;
+    assert.equal(qCode, '{a: a}');
+    assert.equal(parameters.length, 1);
+    assert.equal(parameters[0].name, 'a');
+    assert.equal(parameters[0].value, 1);
+    qCode = parseRets[1].queryObject;
+    parameters = parseRets[1].parameters;
+    assert.equal(qCode, '{b: b}');
+    assert.equal(parameters.length, 1);
+    assert.equal(parameters[0].name, 'b');
+    assert.equal(parameters[0].value, 2);
+  });
 });

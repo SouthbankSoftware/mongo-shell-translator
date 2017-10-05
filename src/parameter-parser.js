@@ -147,9 +147,23 @@ const parseQueryManyParameters = (arg, paramSuffix) => {
   return parseQueryParameters(arg, paramSuffix, true);
 };
 
+const parseArrayParameters = (arg) => {
+  let queryObject = '';
+  const parameters = [];
+  if (!arg || arg.type !== esprima.Syntax.ArrayExpression) {
+    return [{ queryObject, parameters }];
+  }
+  const ret = [];
+  arg.elements.forEach((argument) => {
+    ret.push(parseQueryParameters(argument));
+  });
+  return ret;
+};
+
 module.exports = {
   parseQueryParameters,
   getParameterNumber,
   parseQueryManyParameters,
   capitalizeFirst,
+  parseArrayParameters,
 };

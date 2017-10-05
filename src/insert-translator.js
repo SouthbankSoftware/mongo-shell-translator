@@ -3,6 +3,7 @@ const esprima = require('esprima');
 const parameterParser = require('./parameter-parser');
 const template = require('./template-ast');
 const escodegen = require('escodegen');
+const _ = require('lodash');
 
 const getFunctionName = (arg) => {
   let functionName = 'insert';
@@ -63,12 +64,21 @@ const createParameterizedFunction = (statement, updateExpression, params, contex
   functionName = context.getFunctionName(functionName);
   let insertDoc = '';
   let callFunctionParams = ''; // the parameters we need to put on calling the generated function
-
   if (args.length > 0) {
-    const pNum = parameterParser.getParameterNumber(args[0]);
-    if (pNum <= 4) {
-      const { queryObject, parameters } = parameterParser.parseQueryParameters(args[0]);
-
+    if (args[0].type === esprima.Syntax.ArrayExpression) {
+      const arrayParam = parameterParser.parseArrayParameters(args[0]);
+      insertDoc += 'const doc = [';
+      arrayParam.forEach((param, i) => {
+        let { parameters } = param;
+        if (parameters.length > 0) {
+          insertDoc += `doc${i + 1},`;
+          functionParams.push({ type: esprima.Syntax.Identifier, name: `doc${i + 1}` });
+          callFunctionParams += `${escodegen.generate(args[0].elements[i])},`;
+        }
+      });
+      insertDoc += ']';
+    } else {
+      let { queryObject, parameters } = parameterParser.parseQueryParameters(args[0]);
       if (parameters.length === 0) {
         callFunctionParams += `${queryObject},`;
         functionParams.push({ type: esprima.Syntax.Identifier, name: 'd' });
@@ -76,26 +86,27 @@ const createParameterizedFunction = (statement, updateExpression, params, contex
       } else {
         insertDoc += `const doc = ${queryObject}`;
       }
+      const existedParam = {};
       parameters.forEach((p) => {
-        functionParams.push({ type: esprima.Syntax.Identifier, name: p.name });
+        if (existedParam[p.name] === undefined) {
+          existedParam[p.name] = 0;
+        } else {
+          existedParam[p.name] += 1;
+        }
+        let nameSuf = '';
+        if (existedParam[p.name] > 0) {
+          nameSuf += existedParam[p.name];
+        }
+        functionParams.push({ type: esprima.Syntax.Identifier, name: p.name + nameSuf });
         callFunctionParams += p.value;
         callFunctionParams += ',';
       });
-    } else {
-      functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
-      const { queryObject, parameters } = parameterParser.parseQueryManyParameters(args[0]);
-      insertDoc += `const doc = ${queryObject}`;
-      callFunctionParams = '{';
-      parameters.forEach((p) => {
-        callFunctionParams += `'${p.name}':${p.value},`;
+      args.slice(1).forEach((arg, i) => {
+        functionParams.push({ type: esprima.Syntax.Identifier, name: `arg${i + 1}` });
+        extraParam += `${escodegen.generate(arg)},`;
       });
-      callFunctionParams += '},';
+      callFunctionParams += extraParam;
     }
-    args.slice(1).forEach((arg, i) => {
-      functionParams.push({ type: esprima.Syntax.Identifier, name: `arg${i + 1}` });
-      extraParam += `${escodegen.generate(arg)},`;
-    });
-    callFunctionParams += extraParam;
   } else {
     insertDoc = 'const doc = {}';
   }
