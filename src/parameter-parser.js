@@ -47,7 +47,7 @@ const parseProperty = (property, many = false, parentKey = '', parameters = [], 
   const jsonObjName = paramSuffix ? 'u.' : 'q.';
   const ignoreKey = ['$and', '$or'].indexOf(keyValue) >= 0;
   if (keyName === '$eq' || keyName === '$gt' || keyName === '$gte' || keyName === '$in' || keyName === '$exists' ||
-    keyName === '$lt' || keyName === '$lte' || keyName === '$ne' || keyName === '$nin') {
+    keyName === '$lt' || keyName === '$lte' || keyName === '$ne' || keyName === '$nin' || keyName === '$sum') {
     keyValue = parentKey;
   }
   const camelKeyValue = camelCase(keyValue);
