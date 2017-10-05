@@ -148,7 +148,7 @@ const createParameterizedFunction = (statement, findExpression, params, context,
         p.parameters = '{}';
       }
       callFunctionParams += `${p.parameters},`;
-      cursorParams += `.${p.name}(${p.anme})`;
+      cursorParams += `.${p.name}(${p.name})`;
     }
   });
   const functionStatement = template.buildFunctionTemplate(functionName, functionParams);

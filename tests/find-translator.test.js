@@ -163,5 +163,7 @@ describe('test find translator', () => {
     assert.equal(fun.functionStatement.params.length, 3);
     assert.equal(fun.functionStatement.params[2].name, 'count');
     assert.equal(escodegen.generate(fun.callStatement.body[0]), 'const results = col1Find(db, var1, {});');
+    // assert.equal(fun.functionStatement.body.body[2].body[0].declarations, '');
+    assert.equal(escodegen.generate(fun.functionStatement.body.body[2].body[0].declarations[0].init.arguments[0].body.body[0]), 'const arrayData = useDb.collection(\'col1\').find(query).limit(20).count(count).toArray();');
   });
 });
