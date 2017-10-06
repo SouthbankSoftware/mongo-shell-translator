@@ -5,38 +5,45 @@ const parameterParser = require('./parameter-parser');
 const template = require('./template-ast');
 
 const getMatchFromPipeline = (args) => {
-  let matchParam;
+  let matchParam = [];
+  let restParams = [];
   if (args.length <= 0 || !args[0].elements) {
     return [];
   }
   args[0].elements.forEach((argument) => {
-    if (!matchParam && argument.properties) {
+    if (argument.properties) {
       argument.properties.forEach((p) => {
-        if (p.key && p.key.name === '$match') {
-          matchParam = argument;
+        if (matchParam.length === 0 && p.key && p.key.name === '$match') {
+          matchParam.push(argument);
+        } else {
+          restParams.push(argument);
         }
       });
     }
   });
-  return [matchParam];
+  return { restParams, matchParam };
 };
 
 const createParameters = (statement, expression, originFunName, context) => {
   const db = commonTranslator.findDbName(statement);
   const collection = commonTranslator.findCollectionName(statement);
   const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
-  const args = getMatchFromPipeline(expression.arguments);
+  const { matchParam, restParams } = getMatchFromPipeline(expression.arguments);
   const driverFunctionName = originFunName;
   let functionName = `${collection}${parameterParser.capitalizeFirst(driverFunctionName)}`;
   functionName = context.getFunctionName(functionName);
   let queryCmd = '';
   let callFunctionParams = `${db},`; // the parameters we need to put on calling the generated function
   let extraParam = '';
-  if (args.length > 0) {
-    const pNum = parameterParser.getParameterNumber(args[0]);
+  if (matchParam.length > 0) {
+    const pNum = parameterParser.getParameterNumber(matchParam[0]);
+    let restPipeline = '';
+    restParams.forEach((a) => {
+      restPipeline += `${escodegen.generate(a)},`;
+    });
     if (pNum <= 4) {
-      const { queryObject, parameters } = parameterParser.parseQueryParameters(args[0]);
-      queryCmd += `const query = ${queryObject}`;
+      const { queryObject, parameters } = parameterParser.parseQueryParameters(matchParam[0]);
+      queryCmd += `const pipeline = [${queryObject}, ${restPipeline}]`;
       if (parameters.length === 0) {
         callFunctionParams += `${queryObject},`;
       }
@@ -47,21 +54,16 @@ const createParameters = (statement, expression, originFunName, context) => {
       });
     } else {
       functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
-      const { queryObject, parameters } = parameterParser.parseQueryManyParameters(args[0]);
-      queryCmd += `const query = ${queryObject}`;
+      const { queryObject, parameters } = parameterParser.parseQueryManyParameters(matchParam[0]);
+      queryCmd += `const pipeline = [${queryObject}, ${restPipeline}]`;
       callFunctionParams = '{';
       parameters.forEach((p) => {
         callFunctionParams += `'${p.name}':${p.value},`;
       });
       callFunctionParams += '},';
     }
-    args.slice(1).forEach((arg, i) => {
-      functionParams.push({ type: esprima.Syntax.Identifier, name: `arg${i + 1}` });
-      extraParam += `${escodegen.generate(arg)},`;
-    });
-    callFunctionParams += extraParam;
   } else {
-    queryCmd = 'const query = {}';
+    queryCmd = 'const pipeline = {}';
   }
   return { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams };
 };

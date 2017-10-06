@@ -59,7 +59,7 @@ class MongoShellTranslator {
           }
           return '';
         }
-        const ignore = /^[^\S\x0a\x0d]*(?:show|help|it|exit[\s]*)([\S]*)/gm;
+        const ignore = /^[^\S\x0a\x0d]*(?:show|help|it|exit[\s]|dbk_agg*)([\S]*)/gm;
         m = ignore.exec(statement);
         if (m) {
           return '';
