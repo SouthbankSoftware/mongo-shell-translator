@@ -10,11 +10,11 @@ describe('test mongo shell translator', () => {
     const nativeCode = translator.translate('const last = \'Lee\';const age = 10;db.getSiblingDB("SampleCollections").explains.find({\'user.name.last\': last, \'user.age\': {$gt: age}});');
     const expected = 'const last = "Lee";\n' +
       'const age = 10;\n' +
-      'function explainsFind(db, userNameLast, userAge) {\n' +
+      'function explainsFind(db, userNameLast, gtUserAge) {\n' +
       '    const useDb = db.db("SampleCollections");\n' +
       '    const query = {\n' +
       '      "user.name.last": userNameLast,\n' +
-      '      "user.age": { $gt: userAge }\n' +
+      '      "user.age": { $gt: gtUserAge }\n' +
       '    };\n' +
       '    const returnData = new Promise(resolve => {\n' +
       '      const arrayData = useDb\n' +
@@ -44,12 +44,12 @@ describe('test mongo shell translator', () => {
       '         { "Category":{ $eq:"Family" } } ,\n' +
       '         { "Rating":{ $ne:"R" } } \n' +
       '        ]  });';
-    const expected = 'function Sakila_filmsFind(db, category, rating) {\n' +
+    const expected = 'function Sakila_filmsFind(db, eqCategory, neRating) {\n' +
       '    const useDb = db.db(\'SampleCollections\');\n' +
       '    const query = {\n' +
       '        \'$and\': [\n' +
-      '            { \'Category\': { $eq: category } },\n' +
-      '            { \'Rating\': { $ne: rating } }\n' +
+      '            { \'Category\': { $eq: eqCategory } },\n' +
+      '            { \'Rating\': { $ne: neRating } }\n' +
       '        ]\n' +
       '    };\n' +
       '        const returnData = new Promise(resolve => {\n' +

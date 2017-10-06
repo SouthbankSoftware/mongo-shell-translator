@@ -68,7 +68,6 @@ const createParameterizedFunction = (statement, findExpression, params, context,
     const pNum = parameterParser.getParameterNumber(args[0]);
     if (pNum <= 4) {
       const { queryObject, parameters } = parameterParser.parseQueryParameters(args[0]);
-
       if (parameters.length === 0) {
         callFunctionParams += `${queryObject},`;
         functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });

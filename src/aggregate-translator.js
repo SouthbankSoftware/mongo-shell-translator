@@ -1,44 +1,76 @@
 const commonTranslator = require('./common-translator');
+const escodegen = require('escodegen');
 const esprima = require('esprima');
+const parameterParser = require('./parameter-parser');
+const template = require('./template-ast');
 
-const addPromiseToFunction = ({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam }) => {
-  const prom = commonTranslator.getPromiseStatement('returnData');
-  // add to promise callback
-  const body = prom.body[0].declarations[0].init.arguments[0].body.body;
-  let driverStatement = `const arrayData = useDb.collection('${collection}').${originFunName}(query`;
-  if (extraParam) {
-    driverStatement += `,${extraParam})`;
-  } else {
-    driverStatement += ')';
+const getMatchFromPipeline = (args) => {
+  let matchParam;
+  if (args.length <= 0 || !args[0].elements) {
+    return [];
   }
-  driverStatement += '.toArray()';
-  body.push(esprima.parseScript(driverStatement));
-  body.push(esprima.parseScript('resolve(arrayData)'));
-  functionStatement.body.body.push(prom);
-  functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
-  if (callFunctionParams) {
-    callFunctionParams = `${db}, ${callFunctionParams}`;
-  } else {
-    callFunctionParams = `${db}`;
-  }
+  args[0].elements.forEach((argument) => {
+    if (!matchParam && argument.properties) {
+      argument.properties.forEach((p) => {
+        if (p.key && p.key.name === '$match') {
+          matchParam = argument;
+        }
+      });
+    }
+  });
+  return [matchParam];
 };
 
-const createCallStatement = (functionName, params) => {
-  const script = `const results=${functionName}(${params}); \
-  results.then((r) => { \
-    r.forEach((doc) => {\
-      console.log(JSON.stringify(doc));\
-    });\
-  });`;
-  return esprima.parseScript(script);
+const createParameters = (statement, expression, originFunName, context) => {
+  const db = commonTranslator.findDbName(statement);
+  const collection = commonTranslator.findCollectionName(statement);
+  const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
+  const args = getMatchFromPipeline(expression.arguments);
+  const driverFunctionName = originFunName;
+  let functionName = `${collection}${parameterParser.capitalizeFirst(driverFunctionName)}`;
+  functionName = context.getFunctionName(functionName);
+  let queryCmd = '';
+  let callFunctionParams = `${db},`; // the parameters we need to put on calling the generated function
+  let extraParam = '';
+  if (args.length > 0) {
+    const pNum = parameterParser.getParameterNumber(args[0]);
+    if (pNum <= 4) {
+      const { queryObject, parameters } = parameterParser.parseQueryParameters(args[0]);
+      queryCmd += `const query = ${queryObject}`;
+      if (parameters.length === 0) {
+        callFunctionParams += `${queryObject},`;
+      }
+      parameters.forEach((p) => {
+        functionParams.push({ type: esprima.Syntax.Identifier, name: p.name });
+        callFunctionParams += p.value;
+        callFunctionParams += ',';
+      });
+    } else {
+      functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
+      const { queryObject, parameters } = parameterParser.parseQueryManyParameters(args[0]);
+      queryCmd += `const query = ${queryObject}`;
+      callFunctionParams = '{';
+      parameters.forEach((p) => {
+        callFunctionParams += `'${p.name}':${p.value},`;
+      });
+      callFunctionParams += '},';
+    }
+    args.slice(1).forEach((arg, i) => {
+      functionParams.push({ type: esprima.Syntax.Identifier, name: `arg${i + 1}` });
+      extraParam += `${escodegen.generate(arg)},`;
+    });
+    callFunctionParams += extraParam;
+  } else {
+    queryCmd = 'const query = {}';
+  }
+  return { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams };
 };
 
 const createParameterizedFunction = (statement, updateExpression, params, context, originFunName) => {
-  let { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams } = commonTranslator.createParameters(statement, updateExpression, originFunName, context);
-  console.log('callFunctionParams', callFunctionParams);
+  let { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams } = createParameters(statement, updateExpression, originFunName, context);
   const functionStatement = commonTranslator.createFuncationStatement({ context, collection, functionName, originFunName, functionParams, extraParam, queryCmd, callFunctionParams, db });
-  addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam });
-  const callStatement = createCallStatement(functionName, callFunctionParams);
+  commonTranslator.addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam });
+  const callStatement = commonTranslator.createCallStatement(functionName, callFunctionParams);
   return { functionStatement, functionName, callStatement };
 };
 

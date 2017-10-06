@@ -216,105 +216,127 @@ describe('argument parser test suite', () => {
     parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
     parameters = parseRet.parameters;
-    assert.equal(qCode, '{age: {$gt: age}}');
+    assert.equal(qCode, '{age: {$gt: gtAge}}');
     assert.equal(parameters.length, 1);
-    assert.equal(parameters[0].name, 'age');
+    assert.equal(parameters[0].name, 'gtAge');
 
     code = esprima.parseScript('db.test.find({ qty: { $eq: 20 } } )');
     expression = translator.findSupportedStatement(code.body[0]).expression;
     parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
-    assert.equal(qCode, '{qty: {$eq: qty}}');
+    assert.equal(qCode, '{qty: {$eq: eqQty}}');
     parameters = parseRet.parameters;
     assert.equal(parameters.length, 1);
-    assert.equal(parameters[0].name, 'qty');
+    assert.equal(parameters[0].name, 'eqQty');
 
     code = esprima.parseScript('db.test.find({ qty: { $gte: 20 } } )');
     expression = translator.findSupportedStatement(code.body[0]).expression;
     parseRet = parameterParser.parseQueryManyParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
     parameters = parseRet.parameters;
-    assert.equal(qCode, '{qty: {$gte: q.qty}}');
-    assert.equal(parameters[0].name, 'qty');
+    assert.equal(qCode, '{qty: {$gte: q.gteQty}}');
+    assert.equal(parameters[0].name, 'gteQty');
 
     code = esprima.parseScript('db.test.find({ qty: { $lt: 5 } } )');
     expression = translator.findSupportedStatement(code.body[0]).expression;
     parseRet = parameterParser.parseQueryManyParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
     parameters = parseRet.parameters;
-    assert.equal(qCode, '{qty: {$lt: q.qty}}');
+    assert.equal(qCode, '{qty: {$lt: q.ltQty}}');
     assert.equal(parameters.length, 1);
-    assert.equal(parameters[0].name, 'qty');
+    assert.equal(parameters[0].name, 'ltQty');
 
     code = esprima.parseScript('db.test.find({ qty: { $lte: 5 } } )');
     expression = translator.findSupportedStatement(code.body[0]).expression;
     parseRet = parameterParser.parseQueryManyParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
     parameters = parseRet.parameters;
-    assert.equal(qCode, '{qty: {$lte: q.qty}}');
+    assert.equal(qCode, '{qty: {$lte: q.lteQty}}');
     assert.equal(parameters.length, 1);
-    assert.equal(parameters[0].name, 'qty');
+    assert.equal(parameters[0].name, 'lteQty');
 
     code = esprima.parseScript('db.test.find({ qty: { $ne: "ne" } } )');
     expression = translator.findSupportedStatement(code.body[0]).expression;
     parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
     parameters = parseRet.parameters;
-    assert.equal(qCode, '{qty: {$ne: qty}}');
+    assert.equal(qCode, '{qty: {$ne: neQty}}');
     assert.equal(parameters.length, 1);
-    assert.equal(parameters[0].name, 'qty');
+    assert.equal(parameters[0].name, 'neQty');
 
     code = esprima.parseScript('db.test.find({ qty: { $ne: "ne" }, qty: {$lt: 100}, qty: {$ne: 30} } )');
     expression = translator.findSupportedStatement(code.body[0]).expression;
     parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
-    assert.equal(qCode, '{qty: {$ne: qty},qty: {$lt: qty},qty: {$ne: qty}}');
+    assert.equal(qCode, '{qty: {$ne: neQty},qty: {$lt: ltQty},qty: {$ne: neQty}}');
 
     code = esprima.parseScript('db.test.find({ qty: { $in: [ 5, 15 ] } })');
     expression = translator.findSupportedStatement(code.body[0]).expression;
     parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
     parameters = parseRet.parameters;
-    assert.equal(qCode, '{qty: {$in: qty}}');
+    assert.equal(qCode, '{qty: {$in: inQty}}');
     assert.equal(parameters.length, 1);
-    assert.equal(parameters[0].name, 'qty');
+    assert.equal(parameters[0].name, 'inQty');
 
     code = esprima.parseScript('db.test.find({ qty: { $nin: [ 5, 15 ] } })');
     expression = translator.findSupportedStatement(code.body[0]).expression;
     parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
     parameters = parseRet.parameters;
-    assert.equal(qCode, '{qty: {$nin: qty}}');
+    assert.equal(qCode, '{qty: {$nin: ninQty}}');
     assert.equal(parameters.length, 1);
-    assert.equal(parameters[0].name, 'qty');
+    assert.equal(parameters[0].name, 'ninQty');
 
     code = esprima.parseScript('db.test.find({ qty: { $nin: [ 5, 15 ] } })');
     expression = translator.findSupportedStatement(code.body[0]).expression;
     parseRet = parameterParser.parseQueryManyParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
-    assert.equal(qCode, '{qty: {$nin: q.qty}}');
+    assert.equal(qCode, '{qty: {$nin: q.ninQty}}');
 
     code = esprima.parseScript('db.test.find({ "qty": { $gt: 15 } })');
     expression = translator.findSupportedStatement(code.body[0]).expression;
     parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
     parameters = parseRet.parameters;
-    assert.equal(qCode, '{"qty": {$gt: qty}}');
+    assert.equal(qCode, '{"qty": {$gt: gtQty}}');
     assert.equal(parameters.length, 1);
-    assert.equal(parameters[0].name, 'qty');
+    assert.equal(parameters[0].name, 'gtQty');
 
     code = esprima.parseScript('db.test.find({ "qty": { $gt: 15 }, qty1:{$gt:10}, qty2:{$gt:20},qty3:{$gt:30},qty4:{$gt:40} })');
     expression = translator.findSupportedStatement(code.body[0]).expression;
     parseRet = parameterParser.parseQueryManyParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
     parameters = parseRet.parameters;
-    assert.equal(qCode, '{"qty": {$gt: q.qty},qty1: {$gt: q.qty1},qty2: {$gt: q.qty2},qty3: {$gt: q.qty3},qty4: {$gt: q.qty4}}');
+    assert.equal(qCode, '{"qty": {$gt: q.gtQty},qty1: {$gt: q.gtQty1},qty2: {$gt: q.gtQty2},qty3: {$gt: q.gtQty3},qty4: {$gt: q.gtQty4}}');
     assert.equal(parameters.length, 5);
-    assert.equal(parameters[0].name, 'qty');
-    assert.equal(parameters[1].name, 'qty1');
-    assert.equal(parameters[2].name, 'qty2');
-    assert.equal(parameters[3].name, 'qty3');
-    assert.equal(parameters[4].name, 'qty4');
+    assert.equal(parameters[0].name, 'gtQty');
+    assert.equal(parameters[1].name, 'gtQty1');
+    assert.equal(parameters[2].name, 'gtQty2');
+    assert.equal(parameters[3].name, 'gtQty3');
+    assert.equal(parameters[4].name, 'gtQty4');
+  });
+
+  it('test multiple operators with one parameter on query', () => {
+    let code = esprima.parseScript('db.test.find({"user.age": {$gt: 10, $exists: true}})');
+    let { expression } = translator.findSupportedStatement(code.body[0]);
+    let parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
+    let qCode = parseRet.queryObject;
+    let parameters = parseRet.parameters;
+    assert.equal(qCode, '{"user.age": {$gt: gtUserAge,$exists: existsUserAge}}');
+    assert.equal(parameters.length, 2);
+    assert.equal(parameters[0].name, 'gtUserAge');
+    assert.equal(parameters[1].name, 'existsUserAge');
+
+    code = esprima.parseScript('db.test.find({"user.age": {$gt: 10, $ne: []}})');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
+    qCode = parseRet.queryObject;
+    parameters = parseRet.parameters;
+    assert.equal(qCode, '{"user.age": {$gt: gtUserAge,$ne: neUserAge}}');
+    assert.equal(parameters.length, 2);
+    assert.equal(parameters[0].name, 'gtUserAge');
+    assert.equal(parameters[1].name, 'neUserAge');
   });
 
   it('test nested parameter', () => {
@@ -333,10 +355,10 @@ describe('argument parser test suite', () => {
     parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
     parameters = parseRet.parameters;
-    assert.equal(qCode, '{"user.name.last": userNameLast,"user.age": {$gt: userAge}}');
+    assert.equal(qCode, '{"user.name.last": userNameLast,"user.age": {$gt: gtUserAge}}');
     assert.equal(parameters.length, 2);
     assert.equal(parameters[0].name, 'userNameLast');
-    assert.equal(parameters[1].name, 'userAge');
+    assert.equal(parameters[1].name, 'gtUserAge');
   });
 
   it('test parse array parameter', () => {
@@ -399,11 +421,11 @@ describe('argument parser test suite', () => {
     parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
     qCode = parseRet.queryObject;
     parameters = parseRet.parameters;
-    assert.equal(qCode, '{"$and": [{"Category": {$eq: category}},{"Rating": {$ne: rating}}]}');
+    assert.equal(qCode, '{"$and": [{"Category": {$eq: eqCategory}},{"Rating": {$ne: neRating}}]}');
     assert.equal(parameters.length, 2);
-    assert.equal(parameters[0].name, 'category');
+    assert.equal(parameters[0].name, 'eqCategory');
     assert.equal(parameters[0].value, '"Family"');
-    assert.equal(parameters[1].name, 'rating');
+    assert.equal(parameters[1].name, 'neRating');
     assert.equal(parameters[1].value, '"R"');
   });
 
@@ -424,5 +446,10 @@ describe('argument parser test suite', () => {
     assert.equal(parameters.length, 1);
     assert.equal(parameters[0].name, 'b');
     assert.equal(parameters[0].value, 2);
+  });
+
+  it('test camelCase parser', () => {
+    let camel = parameterParser.camelCase('ne.user.age');
+    assert.equal(camel, 'neUserAge');
   });
 });

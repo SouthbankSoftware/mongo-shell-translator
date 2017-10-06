@@ -48,7 +48,7 @@ const parseProperty = (property, many = false, parentKey = '', parameters = [], 
   const ignoreKey = ['$and', '$or'].indexOf(keyValue) >= 0;
   if (keyName === '$eq' || keyName === '$gt' || keyName === '$gte' || keyName === '$in' || keyName === '$exists' ||
     keyName === '$lt' || keyName === '$lte' || keyName === '$ne' || keyName === '$nin' || keyName === '$sum') {
-    keyValue = parentKey;
+    keyValue = `${keyName.slice(1)}.${parentKey}`;
   }
   const camelKeyValue = camelCase(keyValue);
   if (property.value.type === esprima.Syntax.Literal || property.value.type === esprima.Syntax.Identifier) {
@@ -87,14 +87,19 @@ const parseProperty = (property, many = false, parentKey = '', parameters = [], 
       if (!ignoreKey) {
         parameters.push({ name: camelKeyValue, value: escodegen.generate(property.value) });
       }
-      queryObject += `${keyName}: [`;
-      property.value.elements.forEach((element, j) => {
-        queryObject += `${parseObjectExpressionArgument(element, many, keyName, parameters)}`;
-        if (j < property.value.elements.length - 1) {
-          queryObject += ',';
-        }
-      });
-      queryObject += ']';
+      queryObject += `${keyName}: `;
+      if (property.value.elements.length === 0) {
+        queryObject += camelKeyValue;
+      } else {
+        queryObject += '[';
+        property.value.elements.forEach((element, j) => {
+          queryObject += `${parseObjectExpressionArgument(element, many, keyName, parameters)}`;
+          if (j < property.value.elements.length - 1) {
+            queryObject += ',';
+          }
+        });
+        queryObject += ']';
+      }
     }
   }
   return queryObject;
@@ -166,4 +171,5 @@ module.exports = {
   parseQueryManyParameters,
   capitalizeFirst,
   parseArrayParameters,
+  camelCase,
 };

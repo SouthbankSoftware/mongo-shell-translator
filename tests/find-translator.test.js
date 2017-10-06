@@ -166,4 +166,14 @@ describe('test find translator', () => {
     // assert.equal(fun.functionStatement.body.body[2].body[0].declarations, '');
     assert.equal(escodegen.generate(fun.functionStatement.body.body[2].body[0].declarations[0].init.arguments[0].body.body[0]), 'const arrayData = useDb.collection(\'col1\').find(query).limit(20).count(count).toArray();');
   });
+
+  it('test find one field with mutiple operator', () => {
+    let ast = esprima.parseScript('db.test.find({ age: { $exists: true, $lt:0 } })');
+    let supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('find', supported.name);
+    let fun = findTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context(), supported.name);
+    assert.equal(fun.functionStatement.params.length, 3);
+    assert.equal(fun.functionStatement.params[1].name, 'existsAge');
+    assert.equal(fun.functionStatement.params[2].name, 'ltAge');
+  });
 });
