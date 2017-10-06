@@ -18,6 +18,33 @@ describe('test insert translator', () => {
     assert.equal(functionStatement.params[0].name, 'db');
     assert.equal(functionStatement.params[1].name, 'a');
     assert.equal(escodegen.generate(callStatement.body[0]), 'const results = testInsertOne(db, var1);');
+
+    ast = esprima.parseScript('db.test.insert(docs)');
+    let supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('insert', supported.name);
+    let fun = insertTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context(), supported.name);
+    assert.equal(fun.functionStatement.params.length, 2);
+    assert.equal(fun.functionStatement.params[0].name, 'db');
+    assert.equal(fun.functionStatement.params[1].name, 'docs');
+    assert.equal(fun.functionName, 'testInsertOne');
+
+    ast = esprima.parseScript('db.test.insertMany(docs)');
+    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('insertMany', supported.name);
+    fun = insertTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context(), supported.name);
+    assert.equal(fun.functionStatement.params.length, 2);
+    assert.equal(fun.functionStatement.params[0].name, 'db');
+    assert.equal(fun.functionStatement.params[1].name, 'docs');
+    assert.equal(fun.functionName, 'testInsertMany');
+
+    ast = esprima.parseScript('db.test.insertOne(docs)');
+    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    assert.equal('insertOne', supported.name);
+    fun = insertTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context(), supported.name);
+    assert.equal(fun.functionStatement.params.length, 2);
+    assert.equal(fun.functionStatement.params[0].name, 'db');
+    assert.equal(fun.functionStatement.params[1].name, 'docs');
+    assert.equal(fun.functionName, 'testInsertOne');
   });
 
   it('insert empty object', () => {
