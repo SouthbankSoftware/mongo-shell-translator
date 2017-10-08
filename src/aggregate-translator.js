@@ -43,7 +43,7 @@ const createParameters = (statement, expression, originFunName, context) => {
     });
     if (pNum <= 4) {
       const { queryObject, parameters } = parameterParser.parseQueryParameters(matchParam[0]);
-      queryCmd += `const pipeline = [${queryObject}, ${restPipeline}]`;
+      queryCmd += `const query = [${queryObject}, ${restPipeline}]`;
       if (parameters.length === 0) {
         callFunctionParams += `${queryObject},`;
       }
@@ -55,7 +55,7 @@ const createParameters = (statement, expression, originFunName, context) => {
     } else {
       functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
       const { queryObject, parameters } = parameterParser.parseQueryManyParameters(matchParam[0]);
-      queryCmd += `const pipeline = [${queryObject}, ${restPipeline}]`;
+      queryCmd += `const query = [${queryObject}, ${restPipeline}]`;
       callFunctionParams = '{';
       parameters.forEach((p) => {
         callFunctionParams += `'${p.name}':${p.value},`;
@@ -63,7 +63,7 @@ const createParameters = (statement, expression, originFunName, context) => {
       callFunctionParams += '},';
     }
   } else {
-    queryCmd = 'const pipeline = {}';
+    queryCmd = 'const query = {}';
   }
   return { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams };
 };

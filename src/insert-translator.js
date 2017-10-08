@@ -10,7 +10,7 @@ const getFunctionName = (arg) => {
   if (arg) {
     if (arg.type === esprima.Syntax.ArrayExpression) {
       functionName = 'insertMany';
-    } else {
+    } else if (arg.type === esprima.Syntax.ObjectExpression) {
       functionName = 'insertOne';
     }
   }
@@ -60,6 +60,8 @@ const createParameterizedFunction = (statement, updateExpression, params, contex
     functionName = `${collection}InsertOne`;
   } else if (driverFunctionName === 'insertMany') {
     functionName = `${collection}InsertMany`;
+  } else {
+    functionName = `${collection}Insert`;
   }
   functionName = context.getFunctionName(functionName);
   let insertDoc = '';

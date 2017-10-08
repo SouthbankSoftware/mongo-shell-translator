@@ -26,7 +26,7 @@ describe('test insert translator', () => {
     assert.equal(fun.functionStatement.params.length, 2);
     assert.equal(fun.functionStatement.params[0].name, 'db');
     assert.equal(fun.functionStatement.params[1].name, 'docs');
-    assert.equal(fun.functionName, 'testInsertOne');
+    assert.equal(fun.functionName, 'testInsert');
 
     ast = esprima.parseScript('db.test.insertMany(docs)');
     supported = commonTranslator.findSupportedStatement(ast.body[0]);
