@@ -195,6 +195,16 @@ const createCallStatement = (functionName, params) => {
   return esprima.parseScript(script);
 };
 
+const createCallStatementArrayOutput = (functionName, params) => {
+  const script = `const results=${functionName}(${params}); \
+  results.then((r) => { \
+      r.forEach((doc) => {\
+            console.log(JSON.stringify(doc));\
+        });\
+  });`;
+  return esprima.parseScript(script);
+};
+
 const createPromiseStatement = (collection, funName, extraParam) => {
   const prom = getPromiseStatement('returnData');
   // add to promise callback
@@ -308,4 +318,5 @@ module.exports = {
   createFuncationStatement,
   createCallStatement,
   addPromiseToFunction,
+  createCallStatementArrayOutput,
 };
