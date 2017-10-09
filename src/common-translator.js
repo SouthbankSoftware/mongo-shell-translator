@@ -4,6 +4,7 @@ const commandName = require('./options').commandName;
 const os = require('os');
 const parameterParser = require('./parameter-parser');
 const template = require('./template-ast');
+const syntaxType = require('./options').syntaxType;
 
 /**
  * create collection statement in native driver. It generates the code
@@ -195,21 +196,11 @@ const createCallStatement = (functionName, params) => {
   return esprima.parseScript(script);
 };
 
-const createCallStatementArrayOutput = (functionName, params) => {
-  const script = `const results=${functionName}(${params}); \
-  results.then((r) => { \
-      r.forEach((doc) => {\
-            console.log(JSON.stringify(doc));\
-        });\
-  }).catch(err => console.error(err));`;
-  return esprima.parseScript(script);
-};
-
-const createPromiseStatement = (collection, funName, extraParam) => {
+const createPromiseStatement = (collection, funName, extraParam, queryName) => {
   const prom = getPromiseStatement('returnData');
   // add to promise callback
   const body = prom.body[0].declarations[0].init.arguments[0].body.body;
-  let driverStatement = `const arrayData = useDb.collection('${collection}').${funName}(query`;
+  let driverStatement = `const arrayData = useDb.collection('${collection}').${funName}(${queryName}`;
   if (extraParam) {
     driverStatement += `,${extraParam})`;
   } else {
@@ -234,8 +225,8 @@ const createFuncationStatement = ({ context, functionName, functionParams, query
   return functionStatement;
 };
 
-const addPromiseToFunction = ({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam }) => {
-  const prom = createPromiseStatement(collection, originFunName, extraParam);
+const addPromiseToFunction = ({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam, queryName = 'query' }) => {
+  const prom = createPromiseStatement(collection, originFunName, extraParam, queryName);
   functionStatement.body.body.push(prom);
 
   functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
@@ -300,10 +291,84 @@ const createParameters = (statement, updateExpression, originFunName, context) =
 const createParameterizedFunction = (statement, updateExpression, params, context, originFunName) => {
   let { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams } = createParameters(statement, updateExpression, originFunName, context);
   const functionStatement = createFuncationStatement({ context, collection, functionName, originFunName, functionParams, extraParam, queryCmd, callFunctionParams, db });
-  addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam });
+  addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam, queryName: 'query' });
   const callStatement = createCallStatement(functionName, callFunctionParams);
   return { functionStatement, functionName, callStatement };
 };
+
+class CommonTranslator {
+
+  constructor(syntax = syntaxType.promise) {
+    this.syntax = syntax;
+  }
+
+  createParameterizedFunction(statement, updateExpression, params, context, originFunName) {
+    return createParameterizedFunction(statement, updateExpression, params, context, originFunName);
+  }
+
+  createParameters(statement, updateExpression, originFunName, context) {
+    return createParameters(statement, updateExpression, originFunName, context);
+  }
+
+  addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam, queryName = 'query' }) {
+    const prom = this.createPromiseStatement(collection, originFunName, extraParam, queryName);
+    functionStatement.body.body.push(prom);
+
+    functionStatement.body.body.push({ type: esprima.Syntax.ReturnStatement, argument: { type: esprima.Syntax.Identifier, name: '(returnData)' } });
+    if (callFunctionParams) {
+      callFunctionParams = `${db}, ${callFunctionParams}`;
+    } else {
+      callFunctionParams = `${db}`;
+    }
+  }
+
+  createFuncationStatement({ context, functionName, functionParams, queryCmd }) {
+    const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
+    if (context.currentDB) {
+      functionStatement.body.body.push(esprima.parseScript(`const useDb = db.db("${context.currentDB}")`).body[0]);
+    } else {
+      functionStatement.body.body.push(esprima.parseScript('const useDb = db').body[0]);
+    }
+    if (queryCmd) {
+      functionStatement.body.body = functionStatement.body.body.concat(esprima.parseScript(queryCmd).body);
+    }
+
+    return functionStatement;
+  }
+
+  getPromiseStatement(returnData = 'returnData') {
+    return esprima.parseScript(`const ${returnData} = new Promise((resolve) => {})`);
+  }
+
+  createPromiseStatement(collection, funName, extraParam, queryName) {
+    const prom = this.getPromiseStatement('returnData');
+    // add to promise callback
+    const body = prom.body[0].declarations[0].init.arguments[0].body.body;
+    let driverStatement = `const arrayData = useDb.collection('${collection}').${funName}(${queryName}`;
+    if (extraParam) {
+      driverStatement += `,${extraParam})`;
+    } else {
+      driverStatement += ')';
+    }
+    body.push(esprima.parseScript(driverStatement));
+    body.push(esprima.parseScript('resolve(arrayData)'));
+    return prom;
+  }
+
+  createCallStatement(functionName, params) {
+    return createCallStatement(functionName, params);
+  }
+
+  createCallStatementArrayOutput(functionName, params) {
+    const script = `const results=${functionName}(${params}); \
+  results.then((r) => { \
+      r.forEach((doc) => {\
+            console.log(JSON.stringify(doc));\
+        });\
+  }).catch(err => console.error(err));`;
+    return esprima.parseScript(script);
+  }
+}
 
 module.exports = {
   findDbName,
@@ -318,5 +383,5 @@ module.exports = {
   createFuncationStatement,
   createCallStatement,
   addPromiseToFunction,
-  createCallStatementArrayOutput,
+  CommonTranslator,
 };

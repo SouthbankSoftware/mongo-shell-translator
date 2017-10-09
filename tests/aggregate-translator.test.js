@@ -2,10 +2,11 @@ const assert = require('assert');
 const esprima = require('esprima');
 const escodegen = require('escodegen');
 const commonTranslator = require('../src/common-translator');
-const aggregateTranslator = require('../src/aggregate-translator');
+const AggregateTranslator = require('../src/aggregate-translator').AggregateTranslator;
 const Context = require('../src/context');
 
 describe('test aggregate translator', () => {
+  const aggregateTranslator = new AggregateTranslator();
   it('test complicated aggregate command', () => {
     const command = 'db.enron_messages.aggregate([ {\
       $match: {\
@@ -33,6 +34,7 @@ describe('test aggregate translator', () => {
   });
 
   it('test aggregate pipeline without match', () => {
+    const aggregateTranslator = new AggregateTranslator();
     const command = 'db.enron_messages.aggregate([ \
     { $unwind: "$subFolder" }, {\
     },\
@@ -51,6 +53,7 @@ describe('test aggregate translator', () => {
   });
 
   it('test aggregate pipeline with limit', () => {
+    const aggregateTranslator = new AggregateTranslator();
     const command = 'db.enron_messages.aggregate([ \
     { $limit:  20 },\
     {$sort:{  "tags":-1 }},\

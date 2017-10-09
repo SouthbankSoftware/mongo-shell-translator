@@ -25,4 +25,7 @@ export const commandName = {
   insertMany: 'insertMany',
   deleteOne: 'deleteOne',
   deleteMany: 'deleteMany',
+  dropCollection: 'dropCollection',
+  drop: 'drop',
+  createIndex: 'createIndex',
 };

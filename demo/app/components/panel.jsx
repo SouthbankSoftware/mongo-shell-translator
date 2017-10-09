@@ -16,7 +16,11 @@ export default class Panel extends React.Component {
         + 'db.explains.find({"user.name.last":"Lee"}, {_id: 0}, 10, 100, 1000) \ndb.test.find() \n'
         + 'var i = db.test.find().toArray() \n'
         + 'i = db.test.find()\n'
-        + 'db.test.update({"name":"joey"}, {"name":"mike"}, {multi: true})',
+        + 'db.test.update({"name":"joey"}, {"name":"mike"}, {multi: true})\n'
+        + 'db.test.delete({"name":"joey"})\n'
+        + 'db.test.insert({"name":"joey"})\n'
+        + 'db.test.insert([{"name":"joey"}])\n'
+        + 'db.test.drop()\n',
       translate: '',
       syntax: syntaxType.callback,
     };

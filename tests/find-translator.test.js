@@ -1,13 +1,14 @@
 const assert = require('assert');
-const findTranslator = require('../src/find-translator.js');
+const FindTranslator = require('../src/find-translator.js').FindTranslator;
 const commonTranslator = require('../src/common-translator');
 const esprima = require('esprima');
 const Context = require('../src/context');
 const escodegen = require('escodegen');
-const findOneTranslator = require('../src/find-one-translator');
+const FindOneTranslator = require('../src/find-one-translator').FindOneTranslator;
 
 describe('test find translator', () => {
   it('test get json expression of find command', () => {
+    const findTranslator = new FindTranslator();
     let ast = esprima.parseScript('db.test.find()');
     let { params } = commonTranslator.findSupportedStatement(ast.body[0]);
     let exp = findTranslator.getJsonExpression(params);
@@ -33,6 +34,7 @@ describe('test find translator', () => {
   });
 
   it('find translator empty statement ', () => {
+    const findTranslator = new FindTranslator();
     const ast = esprima.parseScript('db.test.find()');
     const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('find', name);
@@ -52,6 +54,7 @@ describe('test find translator', () => {
   });
 
   it('find translator more than 4 parmaters', () => {
+    const findTranslator = new FindTranslator();
     const ast = esprima.parseScript('db.test.find({a:1, b:2, c:3, d:4, e:5}, {_id:0}, 100)');
     const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('find', name);
@@ -63,6 +66,7 @@ describe('test find translator', () => {
   });
 
   it('find translator extra parmaters', () => {
+    const findTranslator = new FindTranslator();
     let ast = esprima.parseScript('db.test.find({a:1, b:2, c:3, d:4, e:5}, {_id:0}, 100, 10, 1)');
     let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('find', name);
@@ -90,6 +94,7 @@ describe('test find translator', () => {
   });
 
   it('find parameter use variable', () => {
+    const findTranslator = new FindTranslator();
     let ast = esprima.parseScript('db.test.find({a:var1})');
     let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('find', name);
@@ -104,6 +109,7 @@ describe('test find translator', () => {
   });
 
   it('test find with getSiblingDB and getCollection', () => {
+    const findTranslator = new FindTranslator();
     let ast = esprima.parseScript('db.getSiblingDB("test").getCollection("col1").find({a:var1})');
     let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('find', name);
@@ -121,6 +127,7 @@ describe('test find translator', () => {
   });
 
   it('test findOne with getSiblingDB and getCollection', () => {
+    const findOneTranslator = new FindOneTranslator();
     let ast = esprima.parseScript('db.getSiblingDB("test").getCollection("col1").findOne({a:var1})');
     let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('findOne', name);
@@ -138,6 +145,7 @@ describe('test find translator', () => {
   });
 
   it('test parse sort for find', () => {
+    const findTranslator = new FindTranslator();
     let ast = esprima.parseScript('db.getSiblingDB("test").getCollection("col1").find({a:var1}).sort()');
     let supported = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('find', supported.name);
@@ -156,6 +164,7 @@ describe('test find translator', () => {
   });
 
   it('test parse count for find', () => {
+    const findTranslator = new FindTranslator();
     let ast = esprima.parseScript('db.getSiblingDB("test").getCollection("col1").find({a:var1}).count()');
     let supported = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('find', supported.name);
@@ -168,6 +177,7 @@ describe('test find translator', () => {
   });
 
   it('test find one field with mutiple operator', () => {
+    const findTranslator = new FindTranslator();
     let ast = esprima.parseScript('db.test.find({ age: { $exists: true, $lt:0 } })');
     let supported = commonTranslator.findSupportedStatement(ast.body[0]);
     assert.equal('find', supported.name);

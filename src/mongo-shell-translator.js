@@ -5,6 +5,7 @@ import updateTranslator from './update-translator';
 import insertTranslator from './insert-translator';
 import aggregateTranslator from './aggregate-translator';
 import generate from './code-generator';
+import dropTranslator from './drop-translator';
 import { parseOptions, commandName } from './options';
 import Context from './context';
 import _ from 'lodash';
@@ -28,6 +29,9 @@ const translators = {
   [commandName.insertOne]: insertTranslator,
   [commandName.insertMany]: insertTranslator,
   [commandName.aggregate]: aggregateTranslator,
+  [commandName.dropCollection]: dropTranslator,
+  [commandName.drop]: dropTranslator,
+  [commandName.createIndex]: commonTranslator,
 };
 
 class MongoShellTranslator {
@@ -148,7 +152,7 @@ class MongoShellTranslator {
           promiseStatement.body[0].expression = newExp;
           promiseExpression = newExp;
           promiseBody = newExp.arguments[0].body.body;
-          if (c.body[1].type === esprima.Syntax.ExpressionStatement) {
+          if (c.body.length > 1 && c.body[1].type === esprima.Syntax.ExpressionStatement) {
             const st = c.body[1].expression.callee.object.arguments[0].body.body[0];
             promiseBody.push(st);
           }
@@ -225,11 +229,39 @@ class MongoShellTranslator {
         context.numStatement += 1;
         const { name, expression, params, dbName } = commonTranslator.findSupportedStatement(statement);
         if (name) {
-          const translator = translators[name];
+          let translator = translators[name];
           if (translator) {
             const currentDB = context.currentDB;
             if (dbName) {
               context.currentDB = dbName;
+            }
+            switch (name) {
+              case commandName.drop:
+                translator = new dropTranslator.DropTranslator();
+                break;
+              case commandName.aggregate:
+                translator = new aggregateTranslator.AggregateTranslator();
+                break;
+              case commandName.findOne:
+              case commandName.findOneAndDelete:
+              case commandName.findOneAndReplace:
+              case commandName.findOneAndUpdate:
+                translator = new findOneTranslator.FindOneTranslator();
+                break;
+              case commandName.find:
+                translator = new findTranslator.FindTranslator();
+                break;
+              case commandName.insert:
+              case commandName.insertOne:
+              case commandName.insertMany:
+                translator = new insertTranslator.InsertTranslator();
+                break;
+              case commandName.update:
+              case commandName.updateMany:
+              case commandName.updateOne:
+                translator = new updateTranslator.UpdateTranslator();
+                break;
+              default:
             }
             const { functionStatement, callStatement, functionName } = translator.createParameterizedFunction(statement, expression, params, context, name);
             if (dbName) {

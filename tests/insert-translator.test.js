@@ -1,11 +1,12 @@
 const assert = require('assert');
-const insertTranslator = require('../src/insert-translator.js');
+const InsertTranslator = require('../src/insert-translator.js').InsertTranslator;
 const commonTranslator = require('../src/common-translator');
 const esprima = require('esprima');
 const Context = require('../src/context');
 const escodegen = require('escodegen');
 
 describe('test insert translator', () => {
+  const insertTranslator = new InsertTranslator();
   it('test insert command translator with variable as paramter value', () => {
     let ast = esprima.parseScript('db.test.insert({a:var1})');
     let { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);

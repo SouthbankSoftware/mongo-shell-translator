@@ -1,13 +1,14 @@
 const assert = require('assert');
 const esprima = require('esprima');
 const escodegen = require('escodegen');
-const updateTranslator = require('../src/update-translator');
+const UpdateTranslator = require('../src/update-translator').UpdateTranslator;
 const commonTranslator = require('../src/common-translator');
 const options = require('../src/options');
 const utils = require('./utils');
 const Context = require('../src/context');
 
 describe('test update translator', () => {
+  const updateTranslator = new UpdateTranslator();
   it('test update translator', () => {
     let ast = esprima.parseScript('db.test.update({"name": "joey"}, {"name":"mike"})');
     const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
