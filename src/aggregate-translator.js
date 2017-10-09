@@ -4,7 +4,7 @@ const esprima = require('esprima');
 const parameterParser = require('./parameter-parser');
 const template = require('./template-ast');
 
-const getMatchFromPipeline = (args) => {
+const getPipelineByName = (args, pipeLine) => {
   let matchParam = [];
   let restParams = [];
   if (args.length <= 0 || !args[0].elements) {
@@ -13,7 +13,7 @@ const getMatchFromPipeline = (args) => {
   args[0].elements.forEach((argument) => {
     if (argument.properties) {
       argument.properties.forEach((p) => {
-        if (matchParam.length === 0 && p.key && p.key.name === '$match') {
+        if (matchParam.length === 0 && p.key && p.key.name === pipeLine) {
           matchParam.push(argument);
         } else {
           restParams.push(argument);
@@ -28,13 +28,33 @@ const createParameters = (statement, expression, originFunName, context) => {
   const db = commonTranslator.findDbName(statement);
   const collection = commonTranslator.findCollectionName(statement);
   const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
-  const { matchParam, restParams } = getMatchFromPipeline(expression.arguments);
+  const { matchParam, restParams } = getPipelineByName(expression.arguments, '$match');
+  const limitParam = getPipelineByName(expression.arguments, '$limit').matchParam;
   const driverFunctionName = originFunName;
   let functionName = `${collection}${parameterParser.capitalizeFirst(driverFunctionName)}`;
   functionName = context.getFunctionName(functionName);
   let queryCmd = '';
   let callFunctionParams = `${db},`; // the parameters we need to put on calling the generated function
   let extraParam = '';
+  if (expression.arguments.length > 1) {
+    extraParam = escodegen.generate(expression.arguments[1]);
+  }
+  if (limitParam.length === 0) {
+    const lp = {
+      type: esprima.Syntax.ObjectExpression,
+      properties: [{
+        key: {
+          type: esprima.Syntax.Identifier,
+          name: '$limit',
+        },
+        value: {
+          type: esprima.Syntax.Literal,
+          value: 20,
+        },
+      }],
+    };
+    restParams.push(lp);
+  }
   if (matchParam.length > 0) {
     const pNum = parameterParser.getParameterNumber(matchParam[0]);
     let restPipeline = '';
@@ -63,7 +83,11 @@ const createParameters = (statement, expression, originFunName, context) => {
       callFunctionParams += '},';
     }
   } else {
-    queryCmd = 'const query = {}';
+    let restPipeline = '';
+    restParams.forEach((a) => {
+      restPipeline += `${escodegen.generate(a)},`;
+    });
+    queryCmd = `const query = [${restPipeline}]`;
   }
   return { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams };
 };
