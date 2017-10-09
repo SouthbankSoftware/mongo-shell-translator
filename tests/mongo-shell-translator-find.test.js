@@ -31,7 +31,7 @@ describe('test mongo shell translator', () => {
       '  r.forEach(doc => {\n' +
       '    console.log(JSON.stringify(doc));\n' +
       '  });\n' +
-      '});';
+      '}).catch(err => console.error(err));';
     assert.equal(escodegen.generate(esprima.parseScript(nativeCode)), escodegen.generate(esprima.parseScript(expected)));
   });
 
@@ -63,7 +63,7 @@ describe('test mongo shell translator', () => {
       '    r.forEach(doc => {\n' +
       '        console.log(JSON.stringify(doc));\n' +
       '    });\n' +
-      '});';
+      '}).catch(err => console.error(err));';
     const native = translator.translate(code);
     assert.equal(escodegen.generate(esprima.parseScript(native)), escodegen.generate(esprima.parseScript(expected)));
   });

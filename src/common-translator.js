@@ -201,7 +201,7 @@ const createCallStatementArrayOutput = (functionName, params) => {
       r.forEach((doc) => {\
             console.log(JSON.stringify(doc));\
         });\
-  }).catch(err => console.error(err));;`;
+  }).catch(err => console.error(err));`;
   return esprima.parseScript(script);
 };
 
