@@ -41,7 +41,7 @@ const createCallStatement = (functionName, params) => {
   const script = `const results=${functionName}(${params}); \
   results.then((r) => { \
           console.log(JSON.stringify(r));\
-  });`;
+  }).catch(err => console.error(err));;`;
   return esprima.parseScript(script);
 };
 

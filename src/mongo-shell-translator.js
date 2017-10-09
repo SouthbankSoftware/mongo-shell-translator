@@ -149,7 +149,7 @@ class MongoShellTranslator {
           promiseExpression = newExp;
           promiseBody = newExp.arguments[0].body.body;
           if (c.body[1].type === esprima.Syntax.ExpressionStatement) {
-            const st = c.body[1].expression.arguments[0].body.body[0];
+            const st = c.body[1].expression.callee.object.arguments[0].body.body[0];
             promiseBody.push(st);
           }
         } else {

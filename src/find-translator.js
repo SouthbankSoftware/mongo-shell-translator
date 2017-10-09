@@ -43,7 +43,7 @@ const createCallStatement = (functionName, params, context) => {
       r.forEach((doc) => {\
             console.log(JSON.stringify(doc));\
         });\
-  });`;
+  }).catch(err => console.error(err));`;
   return esprima.parseScript(script);
 };
 
