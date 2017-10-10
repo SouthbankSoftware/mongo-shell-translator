@@ -26,6 +26,7 @@ export const commandName = {
   deleteOne: 'deleteOne',
   deleteMany: 'deleteMany',
   dropCollection: 'dropCollection',
+  dropDatabase: 'dropDatabase',
   drop: 'drop',
   createIndex: 'createIndex',
 };

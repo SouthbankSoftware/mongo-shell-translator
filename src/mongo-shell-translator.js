@@ -180,6 +180,8 @@ class MongoShellTranslator {
         translator = new updateTranslator.UpdateTranslator();
         break;
       default:
+        translator = new commonTranslator.CommonTranslator();
+        break;
     }
     return translator;
   }
