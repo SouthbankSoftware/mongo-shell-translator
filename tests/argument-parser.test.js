@@ -101,6 +101,18 @@ describe('argument parser test suite', () => {
     assert.equal(parameters[0].value, '"Joey"');
     assert.equal(parameters[1].name, 'last');
     assert.equal(parameters[1].value, '"Zhao"');
+
+    code = esprima.parseScript('db.test.find({a: 1, b: -1})');
+    expression = translator.findSupportedStatement(code.body[0]).expression;
+    parseRet = parameterParser.parseQueryParameters(expression.arguments[0]);
+    qCode = parseRet.queryObject;
+    parameters = parseRet.parameters;
+    assert.equal(qCode, '{a: a,b: b}');
+    assert.equal(parameters.length, 2);
+    assert.equal(parameters[0].name, 'a');
+    assert.equal(parameters[0].value, '1');
+    assert.equal(parameters[1].name, 'b');
+    assert.equal(parameters[1].value, '-1');
   });
 
   it('parse object paramter', () => {
@@ -110,6 +122,7 @@ describe('argument parser test suite', () => {
     let qCode = parseRet.queryObject;
     let parameters = parseRet.parameters;
     assert.equal(parameters.length, 1);
+    assert.equal(qCode, 'doc');
 
     code = esprima.parseScript('db.test.insert(doc)');
     expression = translator.findSupportedStatement(code.body[0]).expression;

@@ -51,7 +51,8 @@ const parseProperty = (property, many = false, parentKey = '', parameters = [], 
     keyValue = `${keyName.slice(1)}.${parentKey}`;
   }
   const camelKeyValue = camelCase(keyValue);
-  if (property.value.type === esprima.Syntax.Literal || property.value.type === esprima.Syntax.Identifier) {
+  if (property.value.type === esprima.Syntax.Literal || property.value.type === esprima.Syntax.Identifier ||
+    property.value.type === esprima.Syntax.UnaryExpression) {
     if (many) {
       const camel = camelCase(`${keyValue}`);
       queryObject += `${keyName}: ${jsonObjName}${camel}${paramSuffix}`;
@@ -60,7 +61,12 @@ const parseProperty = (property, many = false, parentKey = '', parameters = [], 
       queryObject += `${keyName}: ${camel}${paramSuffix}`;
     }
     if (!ignoreKey) {
-      parameters.push({ name: camelKeyValue, value: property.value.raw ? property.value.raw : property.value.name });
+      if (property.value.type === esprima.Syntax.UnaryExpression) {
+        const str = property.value.operator + property.value.argument.value;
+        parameters.push({ name: camelKeyValue, value: parseFloat(str) });
+      } else {
+        parameters.push({ name: camelKeyValue, value: property.value.raw ? property.value.raw : property.value.name });
+      }
     }
   } else if (property.value.type === esprima.Syntax.ObjectExpression) {
     queryObject += `${keyName}: ${parseObjectExpressionArgument(property.value, many, keyValue, parameters, paramSuffix)}`;
