@@ -13,39 +13,12 @@ import _ from 'lodash';
 const esprima = require('esprima');
 const escodegen = require('escodegen');
 
-const translators = {
-  [commandName.find]: findTranslator,
-  [commandName.findOne]: findOneTranslator,
-  [commandName.findOneAndDelete]: findOneTranslator,
-  [commandName.findOneAndReplace]: findOneTranslator,
-  [commandName.findOneAndUpdate]: findOneTranslator,
-  [commandName.aggregate]: commonTranslator,
-  [commandName.deleteMany]: commonTranslator,
-  [commandName.deleteOne]: commonTranslator,
-  [commandName.update]: updateTranslator,
-  [commandName.updateOne]: updateTranslator,
-  [commandName.updateMany]: updateTranslator,
-  [commandName.insert]: insertTranslator,
-  [commandName.insertOne]: insertTranslator,
-  [commandName.insertMany]: insertTranslator,
-  [commandName.aggregate]: aggregateTranslator,
-  [commandName.dropCollection]: dropTranslator,
-  [commandName.drop]: dropTranslator,
-  [commandName.createIndex]: commonTranslator,
-};
-
 class MongoShellTranslator {
 
   constructor(stype, connection) {
     this.sType = stype;
     this.connection = connection;
     this.translatedStatements = [];
-  }
-
-  createConnectionStatement() {
-    if (this.connection) {
-
-    }
   }
 
   /**
@@ -178,6 +151,39 @@ class MongoShellTranslator {
     return statements;
   }
 
+  createTranslator(name) {
+    let translator;
+    switch (name) {
+      case commandName.drop:
+        translator = new dropTranslator.DropTranslator();
+        break;
+      case commandName.aggregate:
+        translator = new aggregateTranslator.AggregateTranslator();
+        break;
+      case commandName.findOne:
+      case commandName.findOneAndDelete:
+      case commandName.findOneAndReplace:
+      case commandName.findOneAndUpdate:
+        translator = new findOneTranslator.FindOneTranslator();
+        break;
+      case commandName.find:
+        translator = new findTranslator.FindTranslator();
+        break;
+      case commandName.insert:
+      case commandName.insertOne:
+      case commandName.insertMany:
+        translator = new insertTranslator.InsertTranslator();
+        break;
+      case commandName.update:
+      case commandName.updateMany:
+      case commandName.updateOne:
+        translator = new updateTranslator.UpdateTranslator();
+        break;
+      default:
+    }
+    return translator;
+  }
+
   generateCode() {
     const newAst = { type: 'Program', body: [] };
     const exps = _.filter(this.translatedStatements, { type: esprima.Syntax.FunctionExpression });
@@ -229,40 +235,13 @@ class MongoShellTranslator {
         context.numStatement += 1;
         const { name, expression, params, dbName } = commonTranslator.findSupportedStatement(statement);
         if (name) {
-          let translator = translators[name];
+          let translator = this.createTranslator(name);
           if (translator) {
             const currentDB = context.currentDB;
             if (dbName) {
               context.currentDB = dbName;
             }
-            switch (name) {
-              case commandName.drop:
-                translator = new dropTranslator.DropTranslator();
-                break;
-              case commandName.aggregate:
-                translator = new aggregateTranslator.AggregateTranslator();
-                break;
-              case commandName.findOne:
-              case commandName.findOneAndDelete:
-              case commandName.findOneAndReplace:
-              case commandName.findOneAndUpdate:
-                translator = new findOneTranslator.FindOneTranslator();
-                break;
-              case commandName.find:
-                translator = new findTranslator.FindTranslator();
-                break;
-              case commandName.insert:
-              case commandName.insertOne:
-              case commandName.insertMany:
-                translator = new insertTranslator.InsertTranslator();
-                break;
-              case commandName.update:
-              case commandName.updateMany:
-              case commandName.updateOne:
-                translator = new updateTranslator.UpdateTranslator();
-                break;
-              default:
-            }
+
             const { functionStatement, callStatement, functionName } = translator.createParameterizedFunction(statement, expression, params, context, name);
             if (dbName) {
               context.currentDB = currentDB;
