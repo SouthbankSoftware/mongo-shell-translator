@@ -26,8 +26,8 @@ const getPipelineByName = (args, pipeLine) => {
 
 class AggregateTranslator extends commonTranslator.CommonTranslator {
   createParameters(statement, expression, originFunName, context) {
-    const db = commonTranslator.findDbName(statement);
-    const collection = commonTranslator.findCollectionName(statement);
+    const db = this.findDbName(statement);
+    const collection = this.findCollectionName(statement);
     const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
     const { matchParam, restParams } = getPipelineByName(expression.arguments, '$match');
     const limitParam = getPipelineByName(expression.arguments, '$limit').matchParam;

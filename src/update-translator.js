@@ -1,5 +1,5 @@
-const translator = require('./common-translator');
 const CommonTranslator = require('./common-translator').CommonTranslator;
+const translator = require('./common-translator');
 const esprima = require('esprima');
 const parameterParser = require('./parameter-parser');
 const template = require('./template-ast');
@@ -46,8 +46,8 @@ class UpdateTranslator extends CommonTranslator {
    * @param {*} updateExpression the update expression inside the statement
    */
   createParameterizedFunction(statement, updateExpression, params, context, originFunName) {
-    const db = translator.findDbName(statement);
-    const collection = translator.findCollectionName(statement);
+    const db = this.findDbName(statement);
+    const collection = this.findCollectionName(statement);
     const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
     const args = updateExpression.arguments;
     const options = args.length > 2 ? args[2] : null;

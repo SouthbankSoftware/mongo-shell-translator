@@ -1,6 +1,4 @@
-const translator = require('./common-translator');
 const CommonTranslator = require('./common-translator').CommonTranslator;
-const argumentCreator = require('./argument-creator');
 const template = require('./template-ast');
 const esprima = require('esprima');
 const escodegen = require('escodegen');
@@ -25,8 +23,8 @@ class FindOneTranslator extends CommonTranslator {
    * @param {*} originFunName original shell function name
    */
   createParameterizedFunction(statement, findExpression, params, context, originFunName) {
-    const db = translator.findDbName(statement);
-    const collection = translator.findCollectionName(statement);
+    const db = this.findDbName(statement);
+    const collection = this.findCollectionName(statement);
     const functionName = context.getFunctionName(`${collection}FindOne`);
     const args = findExpression.arguments;
     const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
@@ -121,7 +119,6 @@ class FindOneTranslator extends CommonTranslator {
       return {};
     });
   }
-
 }
 
 module.exports = {

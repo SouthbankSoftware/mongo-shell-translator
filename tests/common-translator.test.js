@@ -1,9 +1,11 @@
 const assert = require('assert');
 const esprima = require('esprima');
 const escodegen = require('escodegen');
-const commonTranslator = require('../src/common-translator');
+const CommonTranslator = require('../src/common-translator').CommonTranslator;
+const findSupportedStatement = require('../src/common-translator').findSupportedStatement;
 
 describe('test common translator', () => {
+  const commonTranslator = new CommonTranslator();
   it('test find db name', () => {
     let ast = esprima.parseScript('db.test.find()');
     let dbName = commonTranslator.findDbName(ast.body[0]);
@@ -68,19 +70,19 @@ describe('test common translator', () => {
 
   it('test find supported statement', () => {
     let ast = esprima.parseScript('db.test.find()');
-    let supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    let supported = findSupportedStatement(ast.body[0]);
     assert.equal(supported.name, 'find');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
     assert.equal(supported.params.length, 0);
 
     ast = esprima.parseScript('db.test.find({}, {}).sort({})');
-    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    supported = findSupportedStatement(ast.body[0]);
     assert.equal(supported.name, 'find');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
     assert.equal(supported.params.length, 1);
 
     ast = esprima.parseScript('db.test.find({}, {}).sort({}).skip(10).limit(100)');
-    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    supported = findSupportedStatement(ast.body[0]);
     assert.equal(supported.name, 'find');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
     assert.equal(supported.params.length, 3);
@@ -88,17 +90,17 @@ describe('test common translator', () => {
     assert.equal(supported.params[1].arguments[0].value, '10');
 
     ast = esprima.parseScript('var i = db.test.find({}, {})');
-    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    supported = findSupportedStatement(ast.body[0]);
     assert.equal(supported.name, 'find');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
 
     ast = esprima.parseScript('var i = db.test.find({}, {}).sort({}).skip(10).limit(100)');
-    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    supported = findSupportedStatement(ast.body[0]);
     assert.equal(supported.name, 'find');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
 
     ast = esprima.parseScript('i = db.test.find({}, {}).sort({}).skip(10).limit(100).sort()');
-    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    supported = findSupportedStatement(ast.body[0]);
     assert.equal(supported.name, 'find');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
     assert.equal(supported.params.length, 4);
@@ -106,13 +108,13 @@ describe('test common translator', () => {
 
   it('test update supported statement', () => {
     let ast = esprima.parseScript('db.test.update()');
-    let supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    let supported = findSupportedStatement(ast.body[0]);
     assert.equal(supported.name, 'update');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
     assert.equal(supported.params.length, 0);
 
     ast = esprima.parseScript('db.test.update({}, {}, {})');
-    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    supported = findSupportedStatement(ast.body[0]);
     assert.equal(supported.name, 'update');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
     assert.equal(supported.expression.arguments.length, 3);
@@ -121,35 +123,35 @@ describe('test common translator', () => {
 
   it('test update on getSiblingDB statement', () => {
     let ast = esprima.parseScript('db.getSiblingDB("a").test.update()');
-    let supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    let supported = findSupportedStatement(ast.body[0]);
     assert.equal(supported.name, 'update');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
     assert.equal(supported.params.length, 0);
     assert.equal(supported.dbName, 'a');
 
     ast = esprima.parseScript('i = db.getSiblingDB("test").test.find({}, {}, {})');
-    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    supported = findSupportedStatement(ast.body[0]);
     assert.equal(supported.name, 'find');
     assert.equal(supported.dbName, 'test');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
     assert.equal(supported.expression.arguments.length, 3);
 
     ast = esprima.parseScript('var i = db.getSiblingDB("test").test.insert({}, {}, {})');
-    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    supported = findSupportedStatement(ast.body[0]);
     assert.equal(supported.name, 'insert');
     assert.equal(supported.dbName, 'test');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
     assert.equal(supported.expression.arguments.length, 3);
 
     ast = esprima.parseScript('var i = db.getSiblingDB().test.insert({}, {}, {})');
-    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    supported = findSupportedStatement(ast.body[0]);
     assert.equal(supported.name, 'insert');
     assert.equal(supported.dbName, undefined);
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
     assert.equal(supported.expression.arguments.length, 3);
 
     ast = esprima.parseScript('var i = db.getSiblingDB("SampleCollections").getCollection("test").insert({}, {}, {})');
-    supported = commonTranslator.findSupportedStatement(ast.body[0]);
+    supported = findSupportedStatement(ast.body[0]);
     assert.equal(supported.name, 'insert');
     assert.equal(supported.dbName, 'SampleCollections');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);

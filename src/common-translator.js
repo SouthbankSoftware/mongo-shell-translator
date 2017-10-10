@@ -6,84 +6,6 @@ const parameterParser = require('./parameter-parser');
 const template = require('./template-ast');
 const syntaxType = require('./options').syntaxType;
 
-/**
- * it will find the db name used in the find command,
- * for example: `db.test.find()` will return "db"
- * @param {*} node  the call expression of the find statement
- */
-const findDbName = (statement) => {
-  let root = null;
-  if (statement.type === esprima.Syntax.ExpressionStatement) {
-    if (statement.expression.type === esprima.Syntax.AssignmentExpression) {
-      root = statement.expression.right.callee;
-    } else if (statement.expression.type === esprima.Syntax.CallExpression) {
-      root = statement.expression.callee;
-    }
-  } else if (statement.type === esprima.Syntax.VariableDeclaration) {
-    root = statement.declarations[0].init.callee;
-  }
-  do {
-    if (root && root.type === esprima.Syntax.MemberExpression) {
-      if (root.object.type === esprima.Syntax.Identifier) {
-        return root.object.name;
-      } else if (root.object.type === esprima.Syntax.CallExpression) {
-        root = root.object.callee;
-      } else {
-        root = root.object;
-      }
-    } else {
-      break;
-    }
-  } while (root);
-  return null;
-};
-
-const findCollectionName = (statement) => {
-  let root = null;
-  let parent = null;
-  if (statement.type === esprima.Syntax.ExpressionStatement) {
-    if (statement.expression.type === esprima.Syntax.AssignmentExpression) {
-      root = statement.expression.right.callee;
-      parent = statement.expression.right;
-    } else if (statement.expression.type === esprima.Syntax.CallExpression) {
-      root = statement.expression.callee;
-      parent = statement.expression;
-    }
-  } else if (statement.type === esprima.Syntax.VariableDeclaration) {
-    root = statement.declarations[0].init.callee;
-    parent = statement.declarations[0].init;
-  }
-  do {
-    if (root && root.type === esprima.Syntax.MemberExpression) {
-      if (root.object.type === esprima.Syntax.Identifier) {
-        if (root.property) {
-          return root.property.name;
-        }
-        break;
-      } else if (root.object.type === esprima.Syntax.CallExpression) {
-        if (root.object.callee.property.name === 'getSiblingDB') {
-          if (root.property.name === 'getCollection' && parent &&
-            parent.type === esprima.Syntax.CallExpression &&
-            parent.arguments) {
-            if (parent.arguments.length > 0) {
-              return parent.arguments[0].value;
-            }
-            return undefined;
-          }
-          return root.property.name;
-        }
-        parent = root.object;
-        root = root.object.callee;
-      } else {
-        parent = root;
-        root = root.object;
-      }
-    } else {
-      break;
-    }
-  } while (root);
-  return null;
-};
 
 /**
  * find all supported mongodb statements for example: find, insert, update, delete, aggregate
@@ -185,8 +107,8 @@ class CommonTranslator {
   }
 
   createParameters(statement, updateExpression, originFunName, context) {
-    const db = findDbName(statement);
-    const collection = findCollectionName(statement);
+    const db = this.findDbName(statement);
+    const collection = this.findCollectionName(statement);
     const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
     const args = updateExpression.arguments;
     const driverFunctionName = originFunName;
@@ -291,11 +213,89 @@ class CommonTranslator {
   }).catch(err => console.error(err));`;
     return esprima.parseScript(script);
   }
+
+  /**
+   * it will find the db name used in the find command,
+   * for example: `db.test.find()` will return "db"
+   * @param {*} node  the call expression of the find statement
+   */
+  findDbName(statement) {
+    let root = null;
+    if (statement.type === esprima.Syntax.ExpressionStatement) {
+      if (statement.expression.type === esprima.Syntax.AssignmentExpression) {
+        root = statement.expression.right.callee;
+      } else if (statement.expression.type === esprima.Syntax.CallExpression) {
+        root = statement.expression.callee;
+      }
+    } else if (statement.type === esprima.Syntax.VariableDeclaration) {
+      root = statement.declarations[0].init.callee;
+    }
+    do {
+      if (root && root.type === esprima.Syntax.MemberExpression) {
+        if (root.object.type === esprima.Syntax.Identifier) {
+          return root.object.name;
+        } else if (root.object.type === esprima.Syntax.CallExpression) {
+          root = root.object.callee;
+        } else {
+          root = root.object;
+        }
+      } else {
+        break;
+      }
+    } while (root);
+    return null;
+  }
+
+  findCollectionName(statement) {
+    let root = null;
+    let parent = null;
+    if (statement.type === esprima.Syntax.ExpressionStatement) {
+      if (statement.expression.type === esprima.Syntax.AssignmentExpression) {
+        root = statement.expression.right.callee;
+        parent = statement.expression.right;
+      } else if (statement.expression.type === esprima.Syntax.CallExpression) {
+        root = statement.expression.callee;
+        parent = statement.expression;
+      }
+    } else if (statement.type === esprima.Syntax.VariableDeclaration) {
+      root = statement.declarations[0].init.callee;
+      parent = statement.declarations[0].init;
+    }
+    do {
+      if (root && root.type === esprima.Syntax.MemberExpression) {
+        if (root.object.type === esprima.Syntax.Identifier) {
+          if (root.property) {
+            return root.property.name;
+          }
+          break;
+        } else if (root.object.type === esprima.Syntax.CallExpression) {
+          if (root.object.callee.property.name === 'getSiblingDB') {
+            if (root.property.name === 'getCollection' && parent &&
+              parent.type === esprima.Syntax.CallExpression &&
+              parent.arguments) {
+              if (parent.arguments.length > 0) {
+                return parent.arguments[0].value;
+              }
+              return undefined;
+            }
+            return root.property.name;
+          }
+          parent = root.object;
+          root = root.object.callee;
+        } else {
+          parent = root;
+          root = root.object;
+        }
+      } else {
+        break;
+      }
+    } while (root);
+    return null;
+  }
+
 }
 
 module.exports = {
-  findDbName,
-  findCollectionName,
   findSupportedStatement,
   getPromiseStatement,
   getSeparator,
