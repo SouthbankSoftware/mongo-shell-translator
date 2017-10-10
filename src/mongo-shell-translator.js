@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import commonTranslator from './common-translator';
 import findTranslator from './find-translator';
 import findOneTranslator from './find-one-translator';
@@ -8,7 +9,6 @@ import generate from './code-generator';
 import dropTranslator from './drop-translator';
 import { parseOptions, commandName } from './options';
 import Context from './context';
-import _ from 'lodash';
 
 const esprima = require('esprima');
 const escodegen = require('escodegen');

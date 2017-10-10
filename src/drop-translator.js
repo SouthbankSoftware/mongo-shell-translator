@@ -13,7 +13,7 @@ class DropTranslator extends commonTranslator.CommonTranslator {
     if (funName === commandName.dropDatabase) {
       driverStatement = `const ret = useDb.${commandName.dropDatabase}()`;
     } else {
-      driverStatement = `const ret = useDb.dropCollection('${collection}')`;
+      driverStatement = 'const ret = useDb.dropCollection(collectionName)';
     }
     body.push(esprima.parseScript(driverStatement));
     body.push(esprima.parseScript('resolve(ret)'));
@@ -22,6 +22,11 @@ class DropTranslator extends commonTranslator.CommonTranslator {
 
   createParameterizedFunction(statement, expression, params, context, originFunName) {
     let { db, functionName, callFunctionParams, collection, extraParam, functionParams } = this.createParameters(statement, expression, originFunName, context);
+    if (originFunName === commandName.drop) {
+      functionName = 'dropCollection';
+      functionParams.push({ type: esprima.Syntax.Identifier, name: 'collectionName' });
+      callFunctionParams += ` '${collection}',`;
+    }
     const functionStatement = this.createFuncationStatement({ context, collection, functionName, originFunName, functionParams, extraParam, queryCmd: null, callFunctionParams, db });
     this.addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam, queryName: '' });
     const callStatement = this.createCallStatement(functionName, callFunctionParams);
@@ -29,4 +34,5 @@ class DropTranslator extends commonTranslator.CommonTranslator {
   }
 
 }
+
 module.exports = { DropTranslator };
