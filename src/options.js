@@ -29,4 +29,6 @@ export const commandName = {
   dropDatabase: 'dropDatabase',
   drop: 'drop',
   createIndex: 'createIndex',
+  dropIndex: 'dropIndex',
+  print: 'print',
 };

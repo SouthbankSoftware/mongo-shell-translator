@@ -26,6 +26,8 @@ class DropTranslator extends commonTranslator.CommonTranslator {
       functionName = 'dropCollection';
       functionParams.push({ type: esprima.Syntax.Identifier, name: 'collectionName' });
       callFunctionParams += ` '${collection}',`;
+    } else if (originFunName === commandName.dropDatabase) {
+      functionName = 'dropDatabase';
     }
     const functionStatement = this.createFuncationStatement({ context, collection, functionName, originFunName, functionParams, extraParam, queryCmd: null, callFunctionParams, db });
     this.addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam, queryName: '' });

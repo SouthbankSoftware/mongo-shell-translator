@@ -104,6 +104,12 @@ describe('test common translator', () => {
     assert.equal(supported.name, 'find');
     assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
     assert.equal(supported.params.length, 4);
+
+    ast = esprima.parseScript('print("hello")');
+    supported = findSupportedStatement(ast.body[0]);
+    assert.equal(supported.name, 'print');
+    assert.equal(supported.expression.type, esprima.Syntax.CallExpression);
+    assert.equal(supported.params.length, 4);
   });
 
   it('test update supported statement', () => {

@@ -71,14 +71,6 @@ const findSupportedStatement = (statement) => {
   return {};
 };
 
-/**
- * create a promise statement expression and assign it to returnData:
- *  `returnData = new Promise`
- */
-const getPromiseStatement = (returnData = 'returnData') => {
-  return esprima.parseScript(`const ${returnData} = new Promise((resolve) => {})`);
-};
-
 const getSeparator = () => {
   if (process.browser) {
     return window.navigator.platform.toLowerCase() === 'win32' ? '\r\n' : '\n';
@@ -86,6 +78,9 @@ const getSeparator = () => {
   return os.platform() === 'win32' ? '\r\n' : '\n';
 };
 
+/**
+ * define the general logic for parse a shell command
+ */
 class CommonTranslator {
 
   constructor(syntax = syntaxType.promise) {
@@ -106,6 +101,14 @@ class CommonTranslator {
     return { functionStatement, functionName, callStatement };
   }
 
+  /**
+   * create function parameters
+   *
+   * @param {*} statement
+   * @param {*} updateExpression
+   * @param {*} originFunName
+   * @param {*} context
+   */
   createParameters(statement, updateExpression, originFunName, context) {
     const db = this.findDbName(statement);
     const collection = this.findCollectionName(statement);
@@ -151,6 +154,11 @@ class CommonTranslator {
     return { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams };
   }
 
+  /**
+   * add promise on the function
+   *
+   * @param {*} param0
+   */
   addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam, queryName = 'query' }) {
     const prom = this.createPromiseStatement(collection, originFunName, extraParam, queryName);
     functionStatement.body.body.push(prom);
@@ -177,10 +185,21 @@ class CommonTranslator {
     return functionStatement;
   }
 
+  /**
+   * create a promise statement expression and assign it to returnData:
+   *  `returnData = new Promise`
+   */
   getPromiseStatement(returnData = 'returnData') {
     return esprima.parseScript(`const ${returnData} = new Promise((resolve) => {})`);
   }
 
+  /**
+   * create promise statement with the given parameter
+   * @param {*} collection  the name of the collection
+   * @param {*} funName the name of the function
+   * @param {*} extraParam  extra paramter for the function
+   * @param {*} queryName query variable command
+   */
   createPromiseStatement(collection, funName, extraParam, queryName) {
     const prom = this.getPromiseStatement('returnData');
     // add to promise callback
@@ -196,6 +215,11 @@ class CommonTranslator {
     return prom;
   }
 
+  /**
+   * create a call statment for the generated function
+   * @param {*} functionName the name of the function
+   * @param {*} params funcation paramters
+   */
   createCallStatement(functionName, params) {
     const script = `const results=${functionName}(${params}); \
   results.then((r) => { \
@@ -204,6 +228,11 @@ class CommonTranslator {
     return esprima.parseScript(script);
   }
 
+  /**
+   * create a call statment for the generated function
+   * @param {*} functionName the name of the function
+   * @param {*} params funcation paramters
+   */
   createCallStatementArrayOutput(functionName, params) {
     const script = `const results=${functionName}(${params}); \
   results.then((r) => { \
@@ -246,6 +275,11 @@ class CommonTranslator {
     return null;
   }
 
+  /**
+   * find the collection name from the statement
+   *
+   * @param {*} statement
+   */
   findCollectionName(statement) {
     let root = null;
     let parent = null;
@@ -297,7 +331,6 @@ class CommonTranslator {
 
 module.exports = {
   findSupportedStatement,
-  getPromiseStatement,
   getSeparator,
   CommonTranslator,
 };

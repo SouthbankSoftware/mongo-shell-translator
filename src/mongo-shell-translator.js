@@ -5,6 +5,7 @@ import findOneTranslator from './find-one-translator';
 import updateTranslator from './update-translator';
 import insertTranslator from './insert-translator';
 import aggregateTranslator from './aggregate-translator';
+import simpleTranslator from './simple-translator';
 import generate from './code-generator';
 import dropTranslator from './drop-translator';
 import { parseOptions, commandName } from './options';
@@ -179,6 +180,9 @@ class MongoShellTranslator {
       case commandName.updateMany:
       case commandName.updateOne:
         translator = new updateTranslator.UpdateTranslator();
+        break;
+      case commandName.print:
+        translator = new simpleTranslator.SimpleTranslator();
         break;
       default:
         translator = new commonTranslator.CommonTranslator();
