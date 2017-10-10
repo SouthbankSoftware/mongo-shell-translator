@@ -155,6 +155,7 @@ class MongoShellTranslator {
     let translator;
     switch (name) {
       case commandName.drop:
+      case commandName.dropDatabase:
         translator = new dropTranslator.DropTranslator();
         break;
       case commandName.aggregate:
