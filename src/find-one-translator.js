@@ -91,12 +91,6 @@ class FindOneTranslator extends CommonTranslator {
     return { functionStatement, functionName, callStatement };
   }
 
-  createCollectionStatement(node, dbName, colName) {
-    const statement = translator.createCollectionStatement(node, dbName, colName);
-    return Object.assign(statement, { arguments: argumentCreator.createArguments(node, 0, 1) });
-  }
-
-
   /**
    * return an array of json object include ast expressions.
    *
