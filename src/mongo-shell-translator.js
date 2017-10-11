@@ -184,9 +184,18 @@ class MongoShellTranslator {
       case commandName.print:
         translator = new simpleTranslator.SimpleTranslator();
         break;
-      default:
+      case commandName.deleteMany:
+      case commandName.deleteOne:
+      case commandName.createIndex:
+      case commandName.dropIndex:
         translator = new commonTranslator.CommonTranslator();
         break;
+      default:
+
+        break;
+    }
+    if (translator) {
+      translator.name = name;
     }
     return translator;
   }
@@ -244,22 +253,28 @@ class MongoShellTranslator {
         if (name) {
           let translator = this.createTranslator(name);
           if (translator) {
-            const currentDB = context.currentDB;
-            if (dbName) {
-              context.currentDB = dbName;
-            }
+            if (name !== commandName.print) {
+              const currentDB = context.currentDB;
+              if (dbName) {
+                context.currentDB = dbName;
+              }
 
-            const { functionStatement, callStatement, functionName } = translator.createParameterizedFunction(statement, expression, params, context, name);
-            if (dbName) {
-              context.currentDB = currentDB;
+              const { functionStatement, callStatement, functionName } = translator.createParameterizedFunction(statement, expression, params, context, name);
+              if (dbName) {
+                context.currentDB = currentDB;
+              }
+              this.addStatement({
+                type: esprima.Syntax.FunctionExpression,
+                function: functionStatement,
+                translatorName: name,
+                call: callStatement,
+                functionName,
+              });
+            } else {
+              this.addStatement(translator.createParameterizedFunction(statement, expression, params, context, name).expression);
             }
-            this.addStatement({
-              type: esprima.Syntax.FunctionExpression,
-              function: functionStatement,
-              translatorName: name,
-              call: callStatement,
-              functionName,
-            });
+          } else {
+            this.addStatement({ type: esprima.Syntax.ObjectExpression, value: statement });
           }
         } else {
           this.addStatement({ type: esprima.Syntax.ObjectExpression, value: statement });

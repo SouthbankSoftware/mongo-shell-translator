@@ -26,7 +26,7 @@ const findSupportedStatement = (statement) => {
       root = statement.expression.callee;
       expression = statement.expression;
     }
-  } else if (statement.type === esprima.Syntax.VariableDeclaration) {
+  } else if (statement.type === esprima.Syntax.VariableDeclaration && statement.declarations[0].init) {
     root = statement.declarations[0].init.callee;
     expression = statement.declarations[0].init;
   }
@@ -64,6 +64,8 @@ const findSupportedStatement = (statement) => {
       } else {
         break;
       }
+    } else if (root && root.type === esprima.Syntax.Identifier) {
+      return { name: root.name, params: expression.arguments, expression };
     } else {
       break;
     }
@@ -95,7 +97,7 @@ class CommonTranslator {
    */
   createParameterizedFunction(statement, updateExpression, params, context, originFunName) {
     let { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams } = this.createParameters(statement, updateExpression, originFunName, context);
-    const functionStatement = this.createFuncationStatement({ context, collection, functionName, originFunName, functionParams, extraParam, queryCmd, callFunctionParams, db });
+    const functionStatement = this.createFunctionStatement({ context, collection, functionName, originFunName, functionParams, extraParam, queryCmd, callFunctionParams, db });
     this.addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam, queryName: 'query' });
     const callStatement = this.createCallStatement(functionName, callFunctionParams);
     return { functionStatement, functionName, callStatement };
@@ -171,7 +173,10 @@ class CommonTranslator {
     }
   }
 
-  createFuncationStatement({ context, functionName, functionParams, queryCmd }) {
+  /**
+   * create funcation statement
+   */
+  createFunctionStatement({ context, functionName, functionParams, queryCmd }) {
     const functionStatement = template.buildFunctionTemplate(functionName, functionParams);
     if (context.currentDB) {
       functionStatement.body.body.push(esprima.parseScript(`const useDb = db.db("${context.currentDB}")`).body[0]);

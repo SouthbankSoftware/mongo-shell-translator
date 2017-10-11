@@ -29,7 +29,7 @@ class DropTranslator extends commonTranslator.CommonTranslator {
     } else if (originFunName === commandName.dropDatabase) {
       functionName = 'dropDatabase';
     }
-    const functionStatement = this.createFuncationStatement({ context, collection, functionName, originFunName, functionParams, extraParam, queryCmd: null, callFunctionParams, db });
+    const functionStatement = this.createFunctionStatement({ context, collection, functionName, originFunName, functionParams, extraParam, queryCmd: null, callFunctionParams, db });
     this.addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam, queryName: '' });
     const callStatement = this.createCallStatement(functionName, callFunctionParams);
     return { functionStatement, functionName, callStatement };
