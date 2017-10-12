@@ -1,9 +1,10 @@
 const esprima = require('esprima');
 const escodegen = require('escodegen');
 
-const findOperators = ['$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin', '$and', '$not', '$nor', '$or', '$exists', '$type', '$mod', '$regex', '$text', '$where', '$geoIntersects', '$geoWithin', '$near', '$nearSphere', '$all', '$elemMatch', '$size', '$bitsAllClear', '$bitsAllSet', '$bitsAnyClear', '$bitsAnySet', '$comment', '$meta', '$slice'];
+// const findOperators = ['$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin', '$and', '$not', '$nor', '$or', '$exists', '$type', '$mod', '$regex', '$text', '$where', '$geoIntersects', '$geoWithin', '$near', '$nearSphere', '$all', '$elemMatch', '$size', '$bitsAllClear', '$bitsAllSet', '$bitsAnyClear', '$bitsAnySet', '$comment', '$meta', '$slice'];
 
 const capitalize = str => str.charAt(0).toUpperCase() + str.toLowerCase().slice(1);
+
 const capitalizeFirst = str => str.charAt(0).toUpperCase() + str.slice(1);
 
 const camelCase = (str) => {
@@ -33,6 +34,9 @@ const getParameterNumber = (arg, num = 0) => {
   return num;
 };
 
+/**
+ * parse one parameter as a property
+ */
 const parseProperty = (property, many = false, parentKey = '', parameters = [], paramSuffix = '') => {
   let queryObject = '';
   let keyValue = '';
@@ -111,6 +115,15 @@ const parseProperty = (property, many = false, parentKey = '', parameters = [], 
   return queryObject;
 };
 
+/**
+ * parse object argument
+ *
+ * @param {*} arg the original argument
+ * @param {*} many  whether there are more than 4 parameters
+ * @param {*} parentKey the parent object key name
+ * @param {*} parameters  the array of parameters
+ * @param {*} paramSuffix any suffix of the parameter in case of update
+ */
 const parseObjectExpressionArgument = (arg, many = false, parentKey = '', parameters = [], paramSuffix = '') => {
   let queryObject = '';
   if (arg.type === esprima.Syntax.ObjectExpression) {
@@ -161,6 +174,10 @@ const parseQueryManyParameters = (arg, paramSuffix) => {
   return parseQueryParameters(arg, paramSuffix, true);
 };
 
+/**
+ * parse array parameters
+ * @param {*} arg the array parameters
+ */
 const parseArrayParameters = (arg) => {
   let queryObject = '';
   const parameters = [];

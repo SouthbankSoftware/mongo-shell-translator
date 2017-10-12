@@ -16,7 +16,7 @@ class CommonTranslator {
   /**
    * create parameterized function
    *
-   * @param {*} statement
+   * @param {*} statement the ast statement of this shell command
    * @param {*} updateExpression the update expression inside the statement
    */
   createParameterizedFunction(statement, updateExpression, params, context, originFunName) {
@@ -30,10 +30,10 @@ class CommonTranslator {
   /**
    * create function parameters
    *
-   * @param {*} statement
-   * @param {*} updateExpression
-   * @param {*} originFunName
-   * @param {*} context
+   * @param {*} statement the ast statement of this shell command
+   * @param {*} updateExpression  the expression ast syntax of this shell command
+   * @param {*} originFunName the original function name defined in shell
+   * @param {*} context the context of this translator
    */
   createParameters(statement, updateExpression, originFunName, context) {
     const db = this.findDbName(statement);
@@ -83,7 +83,6 @@ class CommonTranslator {
   /**
    * add promise on the function
    *
-   * @param {*} param0
    */
   addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam, queryName = 'query' }) {
     const prom = this.createPromiseStatement(collection, originFunName, extraParam, queryName);
