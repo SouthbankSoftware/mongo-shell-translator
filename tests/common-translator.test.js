@@ -1,8 +1,7 @@
 const assert = require('assert');
 const esprima = require('esprima');
-const escodegen = require('escodegen');
 const CommonTranslator = require('../src/common-translator').CommonTranslator;
-const findSupportedStatement = require('../src/common-translator').findSupportedStatement;
+const findSupportedStatement = require('../src/utils').findSupportedStatement;
 
 describe('test common translator', () => {
   const commonTranslator = new CommonTranslator();

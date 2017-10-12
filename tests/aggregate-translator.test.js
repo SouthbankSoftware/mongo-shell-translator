@@ -4,10 +4,11 @@ const escodegen = require('escodegen');
 const commonTranslator = require('../src/common-translator');
 const AggregateTranslator = require('../src/aggregate-translator').AggregateTranslator;
 const Context = require('../src/context');
+const findSupportedStatement = require('../src/utils').findSupportedStatement;
 
 describe('test aggregate translator', () => {
-  const aggregateTranslator = new AggregateTranslator();
   it('test complicated aggregate command', () => {
+    const aggregateTranslator = new AggregateTranslator();
     const command = 'db.enron_messages.aggregate([ {\
       $match: {\
         "$and": [\
@@ -25,7 +26,7 @@ describe('test aggregate translator', () => {
 ], { allowDiskUse: true });\
 ';
     const ast = esprima.parseScript(command);
-    const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    const { params, name, expression } = findSupportedStatement(ast.body[0]);
     assert.equal('aggregate', name);
     const { functionStatement, functionName, callStatement } = aggregateTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context(), name);
     assert.equal(callStatement.body.length, 2);
@@ -41,7 +42,7 @@ describe('test aggregate translator', () => {
 ], { allowDiskUse: true });\
 ';
     const ast = esprima.parseScript(command);
-    const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    const { params, name, expression } = findSupportedStatement(ast.body[0]);
     assert.equal('aggregate', name);
     const { functionStatement, functionName, callStatement } = aggregateTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context(), name);
     assert.equal(callStatement.body.length, 2);
@@ -60,7 +61,7 @@ describe('test aggregate translator', () => {
 ]);\
 ';
     const ast = esprima.parseScript(command);
-    const { params, name, expression } = commonTranslator.findSupportedStatement(ast.body[0]);
+    const { params, name, expression } = findSupportedStatement(ast.body[0]);
     assert.equal('aggregate', name);
     const { functionStatement, functionName, callStatement } = aggregateTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context(), name);
     assert.equal(callStatement.body.length, 2);

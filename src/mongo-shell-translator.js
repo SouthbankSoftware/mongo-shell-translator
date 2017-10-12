@@ -10,6 +10,7 @@ import generate from './code-generator';
 import dropTranslator from './drop-translator';
 import { parseOptions, commandName } from './options';
 import Context from './context';
+import { findSupportedStatement, getSeparator } from './utils';
 
 const esprima = require('esprima');
 const escodegen = require('escodegen');
@@ -27,7 +28,7 @@ class MongoShellTranslator {
    */
   preProcess(scripts) {
     if (scripts) {
-      const splitted = scripts.split(commonTranslator.getSeparator());
+      const splitted = scripts.split(getSeparator());
       const filtered = splitted.map((statement) => {
         const pattern = /^[^\S\x0a\x0d]*(?:use[\s]*)([\S]*)/gm;
         let m = pattern.exec(statement);
@@ -44,7 +45,7 @@ class MongoShellTranslator {
         }
         return statement;
       });
-      return filtered.join(commonTranslator.getSeparator());
+      return filtered.join(getSeparator());
     }
     return scripts;
   }
@@ -249,7 +250,7 @@ class MongoShellTranslator {
         }
       } else {
         context.numStatement += 1;
-        const { name, expression, params, dbName } = commonTranslator.findSupportedStatement(statement);
+        const { name, expression, params, dbName } = findSupportedStatement(statement);
         if (name) {
           let translator = this.createTranslator(name);
           if (translator) {

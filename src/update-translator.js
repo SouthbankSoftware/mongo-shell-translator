@@ -1,9 +1,9 @@
 const CommonTranslator = require('./common-translator').CommonTranslator;
-const translator = require('./common-translator');
 const esprima = require('esprima');
 const parameterParser = require('./parameter-parser');
 const template = require('./template-ast');
 const escodegen = require('escodegen');
+const getSeparator = require('./utils').getSeparator;
 
 class UpdateTranslator extends CommonTranslator {
   getFunctionName(options) {
@@ -70,7 +70,7 @@ class UpdateTranslator extends CommonTranslator {
       if (pNum <= 4) {
         const parseParameters = (pName, arg, end = false, updateValue = false) => {
           const { queryObject, parameters } = parameterParser.parseQueryParameters(arg, updateValue ? 'Updated' : '');
-          updateCmd += `const ${pName} = ${queryObject}${translator.getSeparator()}`;
+          updateCmd += `const ${pName} = ${queryObject}${getSeparator()}`;
 
           parameters.forEach((p, i) => {
             functionParams.push({ type: esprima.Syntax.Identifier, name: updateValue ? `${p.name}Updated` : p.name });
@@ -86,7 +86,7 @@ class UpdateTranslator extends CommonTranslator {
         functionParams.push({ type: esprima.Syntax.Identifier, name: 'q' });
         functionParams.push({ type: esprima.Syntax.Identifier, name: 'u' });
         let { queryObject, parameters } = parameterParser.parseQueryManyParameters(args[0]);
-        updateCmd += `const query = ${queryObject}${translator.getSeparator()}`;
+        updateCmd += `const query = ${queryObject}${getSeparator()}`;
         queryObject = parameterParser.parseQueryManyParameters(args[1], 'Updated').queryObject;
         updateCmd += `const update = ${queryObject}`;
         callFunctionParams = '{';
