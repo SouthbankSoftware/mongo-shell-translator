@@ -186,4 +186,15 @@ describe('test find translator', () => {
     assert.equal(fun.functionStatement.params[1].name, 'existsAge');
     assert.equal(fun.functionStatement.params[2].name, 'ltAge');
   });
+
+  it('test find with toArray', () => {
+    const findTranslator = new FindTranslator();
+    let ast = esprima.parseScript('db.test.find({ age: { $exists: true, $lt:0 } }).toArray()');
+    let supported = findSupportedStatement(ast.body[0]);
+    assert.equal('find', supported.name);
+    let fun = findTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context(), supported.name);
+    assert.equal(fun.functionStatement.params.length, 3);
+    assert.equal(fun.functionStatement.params[1].name, 'existsAge');
+    assert.equal(fun.functionStatement.params[2].name, 'ltAge');
+  });
 });

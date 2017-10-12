@@ -67,4 +67,32 @@ describe('test mongo shell translator', () => {
     const native = translator.translate(code);
     assert.equal(escodegen.generate(esprima.parseScript(native)), escodegen.generate(esprima.parseScript(expected)));
   });
+
+  it('test find with to arry in the end', () => {
+    const translator = new MongoShellTranslator();
+    const code = 'db.Sakila_customers.find().toArray();';
+    const expected = 'function Sakila_customersFind(db) {\n' +
+      '  const useDb = db;\n' +
+      '  const query = {};\n' +
+      '  const returnData = new Promise(resolve => {\n' +
+      '    const arrayData = useDb\n' +
+      '      .collection("Sakila_customers")\n' +
+      '      .find(query)\n' +
+      '      .limit(20)\n' +
+      '      .toArray();\n' +
+      '    resolve(arrayData);\n' +
+      '  });\n' +
+      '  return returnData;\n' +
+      '}\n' +
+      'const results = Sakila_customersFind(db);\n' +
+      'results\n' +
+      '  .then(r => {\n' +
+      '    r.forEach(doc => {\n' +
+      '      console.log(JSON.stringify(doc));\n' +
+      '    });\n' +
+      '  })\n' +
+      '  .catch(err => console.error(err));\n';
+    const native = translator.translate(code);
+    assert.equal(escodegen.generate(esprima.parseScript(native)), escodegen.generate(esprima.parseScript(expected)));
+  });
 });

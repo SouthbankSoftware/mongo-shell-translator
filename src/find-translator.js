@@ -110,7 +110,7 @@ class FindTranslator extends CommonTranslator {
 
     let cursorParams = '';
     expParams.forEach((p) => {
-      if (p.name !== 'batchSize' && p.name !== 'limit' && p.name !== 'skip') {
+      if (p.name !== 'batchSize' && p.name !== 'limit' && p.name !== 'skip' && p.name !== 'toArray') {
         functionParams.push({ type: esprima.Syntax.Identifier, name: p.name });
         if (!p.parameters || p.parameters.length === 0) {
           p.parameters = '{}';
