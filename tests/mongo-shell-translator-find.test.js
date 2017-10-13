@@ -95,4 +95,72 @@ describe('test mongo shell translator', () => {
     const native = translator.translate(code);
     assert.equal(escodegen.generate(esprima.parseScript(native)), escodegen.generate(esprima.parseScript(expected)));
   });
+
+  it('test find with assignment', () => {
+    let translator = new MongoShellTranslator();
+    let native = translator.translate('aaa = db.test.find({ age: { $exists: true, $lt:0 } })');
+    const expected = 'function testFind(db, existsAge, ltAge) {\n' +
+      '    const useDb = db;\n' +
+      '    const query = {\n' +
+      '        age: {\n' +
+      '            $exists: existsAge,\n' +
+      '            $lt: ltAge\n' +
+      '        }\n' +
+      '    };\n' +
+      '        const returnData = new Promise(resolve => {\n' +
+      '                const arrayData = useDb.collection(\'test\').find(query).limit(20).toArray();\n' +
+      '                resolve(arrayData);\n' +
+      '    });\n' +
+      '    return (returnData);\n' +
+      '}\n' +
+      'const results = testFind(db, true, 0);\n' +
+      'results.then(aaa => {\n' +
+      '    aaa.forEach(doc => {\n' +
+      '        console.log(JSON.stringify(doc));\n' +
+      '    });\n' +
+      '}).catch(err => console.error(err));';
+    assert.equal(escodegen.generate(esprima.parseScript(native)), escodegen.generate(esprima.parseScript(expected)));
+
+    translator = new MongoShellTranslator();
+    native = translator.translate('const aaa = db.test.find({ age: { $exists: true, $lt:0 } })');
+    assert.equal(escodegen.generate(esprima.parseScript(native)), escodegen.generate(esprima.parseScript(expected)));
+  });
+
+  it('test translate find with same result variable name', () => {
+    let translator = new MongoShellTranslator();
+    let native = translator.translate('let results = db.test.find({})');
+    let expected = 'function testFind(db, q) {\n' +
+      '    const useDb = db;\n' +
+      '    const query = q;\n' +
+      '        const returnData = new Promise(resolve => {\n' +
+      '                const arrayData = useDb.collection(\'test\').find(query).limit(20).toArray();\n' +
+      '                resolve(arrayData);\n' +
+      '    });\n' +
+      '    return (returnData);\n' +
+      '}\n' +
+      'const results1 = testFind(db, {});\n' +
+      'results1.then(results => {\n' +
+      '    results.forEach(doc => {\n' +
+      '        console.log(JSON.stringify(doc));\n' +
+      '    });\n' +
+      '}).catch(err => console.error(err));';
+    assert.equal(escodegen.generate(esprima.parseScript(native)), escodegen.generate(esprima.parseScript(expected)));
+
+    translator = new MongoShellTranslator();
+    native = translator.translate('let results = db.test.findOne()');
+    expected = 'function testFindOne(db) {\n' +
+      '    const useDb = db;\n' +
+      '    const query = {};\n' +
+      '        const returnData = new Promise(resolve => {\n' +
+      '                const arrayData = useDb.collection(\'test\').findOne(query);\n' +
+      '                resolve(arrayData);\n' +
+      '    });\n' +
+      '    return (returnData);\n' +
+      '}\n' +
+      'const results1 = testFindOne(db);\n' +
+      'results1.then(results => {\n' +
+      '    console.log(JSON.stringify(results));\n' +
+      '}).catch(err => console.error(err));';
+    assert.equal(escodegen.generate(esprima.parseScript(native)), escodegen.generate(esprima.parseScript(expected)));
+  });
 });

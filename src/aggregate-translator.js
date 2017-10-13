@@ -93,11 +93,11 @@ class AggregateTranslator extends commonTranslator.CommonTranslator {
     return { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams };
   }
 
-  createParameterizedFunction(statement, updateExpression, params, context, originFunName) {
+  createParameterizedFunction(statement, updateExpression, params, context, originFunName, variableName) {
     let { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams } = this.createParameters(statement, updateExpression, originFunName, context);
     const functionStatement = this.createFunctionStatement({ context, collection, functionName, originFunName, functionParams, extraParam, queryCmd, callFunctionParams, db });
     this.addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam });
-    const callStatement = this.createCallStatementArrayOutput(functionName, callFunctionParams);
+    const callStatement = this.createCallStatementArrayOutput(functionName, callFunctionParams, variableName);
     return { functionStatement, functionName, callStatement };
   }
 

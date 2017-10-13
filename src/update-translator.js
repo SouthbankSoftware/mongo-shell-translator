@@ -31,10 +31,14 @@ class UpdateTranslator extends CommonTranslator {
     return prom;
   }
 
-  createCallStatement(functionName, params) {
-    const script = `const results=${functionName}(${params}); \
-  results.then((r) => { \
-      console.log(JSON.stringify(r));\
+  createCallStatement(functionName, params, variableName = 'r') {
+    let results = 'results';
+    if (variableName === 'results') {
+      results += '1';
+    }
+    const script = `const ${results}=${functionName}(${params}); \
+  ${results}.then((${variableName}) => { \
+      console.log(JSON.stringify(${variableName}));\
   }).catch(err => console.error(err));`;
     return esprima.parseScript(script);
   }
@@ -45,7 +49,7 @@ class UpdateTranslator extends CommonTranslator {
    * @param {*} statement
    * @param {*} updateExpression the update expression inside the statement
    */
-  createParameterizedFunction(statement, updateExpression, params, context, originFunName) {
+  createParameterizedFunction(statement, updateExpression, params, context, originFunName, variableName) {
     const db = this.findDbName(statement);
     const collection = this.findCollectionName(statement);
     const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
@@ -123,7 +127,7 @@ class UpdateTranslator extends CommonTranslator {
     } else {
       callFunctionParams = `${db}`;
     }
-    const callStatement = this.createCallStatement(functionName, callFunctionParams);
+    const callStatement = this.createCallStatement(functionName, callFunctionParams, variableName);
     return { functionStatement, functionName, callStatement };
   }
 }

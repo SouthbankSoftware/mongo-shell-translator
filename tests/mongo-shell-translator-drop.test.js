@@ -38,8 +38,8 @@ describe('test drop translator', () => {
       '    resolve(results);\n' +
       '}).then(r => {\n' +
       '    console.log(JSON.stringify(r));\n' +
-      '    const results = dropCollection(db, \'test2\');\n' +
-      '    return results;\n' +
+      '    const result1 = dropCollection(db, \'test2\');\n' +
+      '    return result1;\n' +
       '}).then(r => {\n' +
       '    console.log(JSON.stringify(r));\n' +
       '}).catch(err => {\n' +

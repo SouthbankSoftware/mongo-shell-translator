@@ -6,10 +6,14 @@ const parameterParser = require('./parameter-parser');
 const _ = require('lodash');
 
 class FindTranslator extends CommonTranslator {
-  createCallStatement(functionName, params) {
-    const script = `const results=${functionName}(${params}); \
-  results.then((r) => { \
-      r.forEach((doc) => {\
+  createCallStatement(functionName, params, context, variableName = 'r') {
+    let results = 'results';
+    if (variableName === 'results') {
+      results += '1';
+    }
+    const script = `const ${results}=${functionName}(${params}); \
+  ${results}.then((${variableName}) => { \
+      ${variableName}.forEach((doc) => {\
             console.log(JSON.stringify(doc));\
         });\
   }).catch(err => console.error(err));`;
@@ -23,8 +27,9 @@ class FindTranslator extends CommonTranslator {
    * @param {*} findExpression the find expression inside the statement
    * @param {*} params an array include ast expression such as limit(10), skip(100), etc.
    * @param {*} originFunName original shell function name
+   * @param {*} variableName  assign variable
    */
-  createParameterizedFunction(statement, findExpression, params, context, originFunName) {
+  createParameterizedFunction(statement, findExpression, params, context, originFunName, variableName) {
     const db = this.findDbName(statement);
     const collection = this.findCollectionName(statement);
     const functionName = context.getFunctionName(`${collection}Find`);
@@ -161,7 +166,7 @@ class FindTranslator extends CommonTranslator {
     } else {
       callFunctionParams = `${db}`;
     }
-    const callStatement = this.createCallStatement(functionName, callFunctionParams, context); // esprima.parseScript(`${functionName}(${callFunctionParams})`);
+    const callStatement = this.createCallStatement(functionName, callFunctionParams, context, variableName); // esprima.parseScript(`${functionName}(${callFunctionParams})`);
     return { functionStatement, functionName, callStatement };
   }
 

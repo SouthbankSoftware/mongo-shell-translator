@@ -19,11 +19,11 @@ class CommonTranslator {
    * @param {*} statement the ast statement of this shell command
    * @param {*} updateExpression the update expression inside the statement
    */
-  createParameterizedFunction(statement, updateExpression, params, context, originFunName) {
+  createParameterizedFunction(statement, updateExpression, params, context, originFunName, variableName) {
     let { db, functionName, queryCmd, callFunctionParams, collection, extraParam, functionParams } = this.createParameters(statement, updateExpression, originFunName, context);
     const functionStatement = this.createFunctionStatement({ context, collection, functionName, originFunName, functionParams, extraParam, queryCmd, callFunctionParams, db });
     this.addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam, queryName: 'query' });
-    const callStatement = this.createCallStatement(functionName, callFunctionParams);
+    const callStatement = this.createCallStatement(functionName, callFunctionParams, variableName);
     return { functionStatement, functionName, callStatement };
   }
 
@@ -35,7 +35,7 @@ class CommonTranslator {
    * @param {*} originFunName the original function name defined in shell
    * @param {*} context the context of this translator
    */
-  createParameters(statement, updateExpression, originFunName, context) {
+  createParameters(statement, updateExpression, originFunName, context, name, variable) {
     const db = this.findDbName(statement);
     const collection = this.findCollectionName(statement);
     const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
@@ -147,10 +147,14 @@ class CommonTranslator {
    * @param {*} functionName the name of the function
    * @param {*} params funcation paramters
    */
-  createCallStatement(functionName, params) {
-    const script = `const results=${functionName}(${params}); \
-  results.then((r) => { \
-      console.log(JSON.stringify(r));\
+  createCallStatement(functionName, params, variableName = 'r') {
+    let results = 'results';
+    if (variableName === 'results') {
+      results += '1';
+    }
+    const script = `const ${results}=${functionName}(${params}); \
+  ${results}.then((${variableName}) => { \
+      console.log(JSON.stringify(${variableName}));\
   }).catch(err => console.error(err));`;
     return esprima.parseScript(script);
   }
@@ -160,10 +164,10 @@ class CommonTranslator {
    * @param {*} functionName the name of the function
    * @param {*} params funcation paramters
    */
-  createCallStatementArrayOutput(functionName, params) {
+  createCallStatementArrayOutput(functionName, params, variableName = 'r') {
     const script = `const results=${functionName}(${params}); \
-  results.then((r) => { \
-      r.forEach((doc) => {\
+  results.then((${variableName}) => { \
+      ${variableName}.forEach((doc) => {\
             console.log(JSON.stringify(doc));\
         });\
   }).catch(err => console.error(err));`;

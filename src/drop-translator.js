@@ -20,7 +20,7 @@ class DropTranslator extends commonTranslator.CommonTranslator {
     return prom;
   }
 
-  createParameterizedFunction(statement, expression, params, context, originFunName) {
+  createParameterizedFunction(statement, expression, params, context, originFunName, variableName) {
     let { db, functionName, callFunctionParams, collection, extraParam, functionParams } = this.createParameters(statement, expression, originFunName, context);
     if (originFunName === commandName.drop) {
       functionName = 'dropCollection';
@@ -31,7 +31,7 @@ class DropTranslator extends commonTranslator.CommonTranslator {
     }
     const functionStatement = this.createFunctionStatement({ context, collection, functionName, originFunName, functionParams, extraParam, queryCmd: null, callFunctionParams, db });
     this.addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam, queryName: '' });
-    const callStatement = this.createCallStatement(functionName, callFunctionParams);
+    const callStatement = this.createCallStatement(functionName, callFunctionParams, variableName);
     return { functionStatement, functionName, callStatement };
   }
 

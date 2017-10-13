@@ -72,6 +72,26 @@ class MongoShellTranslator {
   }
 
   createStatementAfterPromise(name, promiseExpression, paramName) {
+    if (promiseExpression && promiseExpression.arguments.length > 0 && promiseExpression.arguments[0].body &&
+      promiseExpression.arguments[0].body.body && promiseExpression.arguments[0].body.body.length > 2) {
+      let found = false;
+      promiseExpression.arguments[0].body.body = promiseExpression.arguments[0].body.body.map((v) => {
+        if (v && v.type === esprima.Syntax.VariableDeclaration &&
+          v.declarations && v.declarations.length > 0 && v.declarations[0].id && v.declarations[0].id.type === esprima.Syntax.Identifier) {
+          if (v.declarations[0].id.name === 'results') {
+            v.declarations[0].id.name = 'result1';
+            found = true;
+          }
+        }
+        return v;
+      });
+      if (found) {
+        const length = promiseExpression.arguments[0].body.body.length;
+        if (promiseExpression.arguments[0].body.body[length - 1].type === esprima.Syntax.ReturnStatement) {
+          promiseExpression.arguments[0].body.body[length - 1].argument.name = 'result1';
+        }
+      }
+    }
     const newExp = {
       type: esprima.Syntax.CallExpression,
       callee: {
@@ -123,7 +143,9 @@ class MongoShellTranslator {
           } else {
             promiseBody.push(esprima.parseScript(`function a(){ return ${resultName}}`).body[0].body.body[0]);
           }
-          const newExp = this.createStatementAfterPromise('then', promiseExpression, 'r');
+          const variableName = exp.variableName ? exp.variableName : 'r';
+          const newExp = this.createStatementAfterPromise('then', promiseExpression, variableName);
+          console.log('new exp=', escodegen.generate(newExp));
           promiseStatement.body[0].expression = newExp;
           promiseExpression = newExp;
           promiseBody = newExp.arguments[0].body.body;
@@ -192,7 +214,6 @@ class MongoShellTranslator {
         translator = new commonTranslator.CommonTranslator();
         break;
       default:
-
         break;
     }
     if (translator) {
@@ -260,7 +281,7 @@ class MongoShellTranslator {
                 context.currentDB = dbName;
               }
 
-              const { functionStatement, callStatement, functionName } = translator.createParameterizedFunction(statement, expression, params, context, name);
+              const { functionStatement, callStatement, functionName } = translator.createParameterizedFunction(statement, expression, params, context, name, variable);
               if (dbName) {
                 context.currentDB = currentDB;
               }
@@ -273,7 +294,7 @@ class MongoShellTranslator {
                 variableName: variable,
               });
             } else {
-              this.addStatement({ ...translator.createParameterizedFunction(statement, expression, params, context, name).expression, variableName: variable });
+              this.addStatement({ ...translator.createParameterizedFunction(statement, expression, params, context, name, variable).expression, variableName: variable });
             }
           } else {
             this.addStatement({ type: esprima.Syntax.ObjectExpression, value: statement, variableName: variable });
