@@ -250,7 +250,7 @@ class MongoShellTranslator {
         }
       } else {
         context.numStatement += 1;
-        const { name, expression, params, dbName } = findSupportedStatement(statement);
+        const { name, expression, params, dbName, variable } = findSupportedStatement(statement);
         if (name) {
           let translator = this.createTranslator(name);
           if (translator) {
@@ -270,15 +270,16 @@ class MongoShellTranslator {
                 translatorName: name,
                 call: callStatement,
                 functionName,
+                variableName: variable,
               });
             } else {
-              this.addStatement(translator.createParameterizedFunction(statement, expression, params, context, name).expression);
+              this.addStatement({ ...translator.createParameterizedFunction(statement, expression, params, context, name).expression, variableName: variable });
             }
           } else {
-            this.addStatement({ type: esprima.Syntax.ObjectExpression, value: statement });
+            this.addStatement({ type: esprima.Syntax.ObjectExpression, value: statement, variableName: variable });
           }
         } else {
-          this.addStatement({ type: esprima.Syntax.ObjectExpression, value: statement });
+          this.addStatement({ type: esprima.Syntax.ObjectExpression, value: statement, variableName: variable });
         }
       }
     });

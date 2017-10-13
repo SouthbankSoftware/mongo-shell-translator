@@ -12,8 +12,10 @@ const esprima = require('esprima');
 const findSupportedStatement = (statement) => {
   let root = null; // the callee expression
   let expression = null;
+  let variable;
   if (statement.type === esprima.Syntax.ExpressionStatement) {
     if (statement.expression.type === esprima.Syntax.AssignmentExpression) {
+      variable = statement.expression.left.name;
       root = statement.expression.right.callee;
       expression = statement.expression.right;
     } else if (statement.expression.type === esprima.Syntax.CallExpression) {
@@ -21,6 +23,7 @@ const findSupportedStatement = (statement) => {
       expression = statement.expression;
     }
   } else if (statement.type === esprima.Syntax.VariableDeclaration && statement.declarations[0].init) {
+    variable = statement.declarations[0].id.name;
     root = statement.declarations[0].init.callee;
     expression = statement.declarations[0].init;
   }
@@ -44,7 +47,7 @@ const findSupportedStatement = (statement) => {
       root.property.type === esprima.Syntax.Identifier) {
       const name = root.property.name;
       if (Object.values(commandName).indexOf(name) > -1) {
-        return { name, expression, params, dbName };
+        return { name, expression, params, dbName, variable };
       }
       if (root.object && root.object.type === esprima.Syntax.CallExpression) {
         params.push(expression);
@@ -59,7 +62,7 @@ const findSupportedStatement = (statement) => {
         break;
       }
     } else if (root && root.type === esprima.Syntax.Identifier) {
-      return { name: root.name, params: expression.arguments, expression };
+      return { name: root.name, params: expression.arguments, expression, variable };
     } else {
       break;
     }

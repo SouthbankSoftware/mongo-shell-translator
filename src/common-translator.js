@@ -82,7 +82,6 @@ class CommonTranslator {
 
   /**
    * add promise on the function
-   *
    */
   addPromiseToFunction({ db, functionStatement, callFunctionParams, collection, originFunName, extraParam, queryName = 'query' }) {
     const prom = this.createPromiseStatement(collection, originFunName, extraParam, queryName);
