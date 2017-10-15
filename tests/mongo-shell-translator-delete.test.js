@@ -40,8 +40,8 @@ describe('test delete translator', () => {
       '    resolve(results);\n' +
       '}).then(r => {\n' +
       '    console.log(JSON.stringify(r));\n' +
-      '    const result1 = testDeleteOne(db, 1);\n' +
-      '    return result1;\n' +
+      '    const results = testDeleteOne(db, 1);\n' +
+      '    return results;\n' +
       '}).then(r => {\n' +
       '    console.log(JSON.stringify(r));\n' +
       '}).catch(err => {\n' +

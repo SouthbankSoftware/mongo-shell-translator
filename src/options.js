@@ -29,5 +29,6 @@ export const commandName = {
   drop: 'drop',
   createIndex: 'createIndex',
   dropIndex: 'dropIndex',
+  dropIndexes: 'dropIndexes',
   print: 'print',
 };

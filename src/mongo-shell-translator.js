@@ -71,25 +71,21 @@ class MongoShellTranslator {
     }
   }
 
-  createStatementAfterPromise(name, promiseExpression, paramName) {
-    if (promiseExpression && promiseExpression.arguments.length > 0 && promiseExpression.arguments[0].body &&
-      promiseExpression.arguments[0].body.body && promiseExpression.arguments[0].body.body.length > 2) {
-      let found = false;
+  createStatementAfterPromise(name, promiseExpression, paramName, thenParamName) {
+    if (thenParamName === 'results') {
       promiseExpression.arguments[0].body.body = promiseExpression.arguments[0].body.body.map((v) => {
         if (v && v.type === esprima.Syntax.VariableDeclaration &&
           v.declarations && v.declarations.length > 0 && v.declarations[0].id && v.declarations[0].id.type === esprima.Syntax.Identifier) {
           if (v.declarations[0].id.name === 'results') {
             v.declarations[0].id.name = 'result1';
-            found = true;
           }
         }
         return v;
       });
-      if (found) {
-        const length = promiseExpression.arguments[0].body.body.length;
-        if (promiseExpression.arguments[0].body.body[length - 1].type === esprima.Syntax.ReturnStatement) {
-          promiseExpression.arguments[0].body.body[length - 1].argument.name = 'result1';
-        }
+      const length = promiseExpression.arguments[0].body.body.length;
+      if (promiseExpression.arguments[0].body.body[length - 1].type === esprima.Syntax.ReturnStatement) {
+        // change return variable name
+        promiseExpression.arguments[0].body.body[length - 1].argument.name = 'result1';
       }
     }
     const newExp = {
@@ -144,8 +140,7 @@ class MongoShellTranslator {
             promiseBody.push(esprima.parseScript(`function a(){ return ${resultName}}`).body[0].body.body[0]);
           }
           const variableName = exp.variableName ? exp.variableName : 'r';
-          const newExp = this.createStatementAfterPromise('then', promiseExpression, variableName);
-          console.log('new exp=', escodegen.generate(newExp));
+          const newExp = this.createStatementAfterPromise('then', promiseExpression, variableName, promiseStatement.body[0].expression.arguments[0].params[0].name);
           promiseStatement.body[0].expression = newExp;
           promiseExpression = newExp;
           promiseBody = newExp.arguments[0].body.body;
@@ -211,6 +206,7 @@ class MongoShellTranslator {
       case commandName.deleteOne:
       case commandName.createIndex:
       case commandName.dropIndex:
+      case commandName.dropIndexes:
         translator = new commonTranslator.CommonTranslator();
         break;
       default:

@@ -57,6 +57,15 @@ describe('test generate translator', () => {
       '    });\n' +
       '    return (returnData);\n' +
       '}\n' +
+      'function peopleDropIndexes(db) {\n' +
+      '    const useDb = db.db(\'SampleCollections\');\n' +
+      '    const query = {};\n' +
+      '        const returnData = new Promise(resolve => {\n' +
+      '                const arrayData = useDb.collection(\'people\').dropIndexes(query);\n' +
+      '                resolve(arrayData);\n' +
+      '    });\n' +
+      '    return (returnData);\n' +
+      '}\n' +
       'function peopleCreateIndex(db, surname) {\n' +
       '    const useDb = db.db(\'SampleCollections\');\n' +
       '    const query = { \'Surname\': surname };\n' +
@@ -110,8 +119,8 @@ describe('test generate translator', () => {
       '    resolve(results);\n' +
       '}).then(r => {\n' +
       '    console.log(JSON.stringify(r));\n' +
-      '    const result1 = Sakila_customersFind(db);\n' +
-      '    return result1;\n' +
+      '    const results = Sakila_customersFind(db);\n' +
+      '    return results;\n' +
       '}).then(cust => {\n' +
       '    cust.forEach(doc => {\n' +
       '        console.log(JSON.stringify(doc));\n' +
@@ -142,21 +151,24 @@ describe('test generate translator', () => {
       '}).then(results => {\n' +
       '    console.log(JSON.stringify(results));\n' +
       '    db.people.count();\n' +
-      '    db.people.dropIndexes();\n' +
-      '    const result1 = peopleCreateIndex(db, 1);\n' +
+      '    const result1 = peopleDropIndexes(db);\n' +
       '    return result1;\n' +
       '}).then(r => {\n' +
       '    console.log(JSON.stringify(r));\n' +
-      '    const result1 = peopleCreateIndex1(db, 1, 1);\n' +
-      '    return result1;\n' +
+      '    const results = peopleCreateIndex(db, 1);\n' +
+      '    return results;\n' +
       '}).then(r => {\n' +
       '    console.log(JSON.stringify(r));\n' +
-      '    const result1 = peopleCreateIndex2(db, 1, 1, 1);\n' +
-      '    return result1;\n' +
+      '    const results = peopleCreateIndex1(db, 1, 1);\n' +
+      '    return results;\n' +
       '}).then(r => {\n' +
       '    console.log(JSON.stringify(r));\n' +
-      '    const result1 = peopleCreateIndex3(db, 1, 1, 1, 1);\n' +
-      '    return result1;\n' +
+      '    const results = peopleCreateIndex2(db, 1, 1, 1);\n' +
+      '    return results;\n' +
+      '}).then(r => {\n' +
+      '    console.log(JSON.stringify(r));\n' +
+      '    const results = peopleCreateIndex3(db, 1, 1, 1, 1);\n' +
+      '    return results;\n' +
       '}).then(r => {\n' +
       '    console.log(JSON.stringify(r));\n' +
       '}).catch(err => {\n' +

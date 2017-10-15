@@ -38,13 +38,32 @@ describe('test drop translator', () => {
       '    resolve(results);\n' +
       '}).then(r => {\n' +
       '    console.log(JSON.stringify(r));\n' +
-      '    const result1 = dropCollection(db, \'test2\');\n' +
-      '    return result1;\n' +
+      '    const results = dropCollection(db, \'test2\');\n' +
+      '    return results;\n' +
       '}).then(r => {\n' +
       '    console.log(JSON.stringify(r));\n' +
       '}).catch(err => {\n' +
       '    console.error(err);\n' +
       '});';
+    assert.equal(escodegen.generate(esprima.parseScript(nativeCode)), escodegen.generate(esprima.parseScript(expected)));
+  });
+
+  it('test drop indexes', () => {
+    const translator = new MongoShellTranslator();
+    const nativeCode = translator.translate('db.people.dropIndexes()');
+    const expected = 'function peopleDropIndexes(db) {\n' +
+      '    const useDb = db;\n' +
+      '    const query = {};\n' +
+      '        const returnData = new Promise(resolve => {\n' +
+      '                const arrayData = useDb.collection(\'people\').dropIndexes(query);\n' +
+      '                resolve(arrayData);\n' +
+      '    });\n' +
+      '    return (returnData);\n' +
+      '}\n' +
+      'const results = peopleDropIndexes(db);\n' +
+      'results.then(r => {\n' +
+      '    console.log(JSON.stringify(r));\n' +
+      '}).catch(err => console.error(err));';
     assert.equal(escodegen.generate(esprima.parseScript(nativeCode)), escodegen.generate(esprima.parseScript(expected)));
   });
 });
