@@ -4,7 +4,6 @@ const esprima = require('esprima');
 const escodegen = require('escodegen');
 const parameterParser = require('./parameter-parser');
 
-
 class FindOneTranslator extends CommonTranslator {
   createCallStatement(functionName, params, variableName = 'r') {
     let results = 'results';
@@ -29,7 +28,7 @@ class FindOneTranslator extends CommonTranslator {
   createParameterizedFunction(statement, findExpression, params, context, originFunName, variableName) {
     const db = this.findDbName(statement);
     const collection = this.findCollectionName(statement);
-    const functionName = context.getFunctionName(`${collection}FindOne`);
+    const functionName = context.getFunctionName(`${collection}${parameterParser.capitalizeFirst(originFunName)}`);
     const args = findExpression.arguments;
     const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
     let queryCmd = '';

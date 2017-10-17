@@ -131,14 +131,14 @@ describe('test find translator', () => {
     let ast = esprima.parseScript('db.getSiblingDB("test").getCollection("col1").findOne({a:var1})');
     let { params, name, expression } = findSupportedStatement(ast.body[0]);
     assert.equal('findOne', name);
-    let { functionName, callStatement } = findOneTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context());
+    let { functionName, callStatement } = findOneTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context(), name);
     assert.equal(callStatement.body.length, 2);
     assert.equal(functionName, 'col1FindOne');
     assert.equal(escodegen.generate(callStatement.body[0]), 'const results = col1FindOne(db, var1);');
 
     ast = esprima.parseScript('db.getSiblingDB("test").col1.findOne({a:var1})');
     let supported = findSupportedStatement(ast.body[0]);
-    let fun = findOneTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context());
+    let fun = findOneTranslator.createParameterizedFunction(ast.body[0], supported.expression, supported.params, new Context(), supported.name);
     assert.equal(fun.callStatement.body.length, 2);
     assert.equal(fun.functionName, 'col1FindOne');
     assert.equal(escodegen.generate(fun.callStatement.body[0]), 'const results = col1FindOne(db, var1);');

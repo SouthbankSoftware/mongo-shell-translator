@@ -163,4 +163,68 @@ describe('test mongo shell translator', () => {
       '}).catch(err => console.error(err));';
     assert.equal(escodegen.generate(esprima.parseScript(native)), escodegen.generate(esprima.parseScript(expected)));
   });
+
+  it('test find with getSiblingDB and getCollection', () => {
+    let translator = new MongoShellTranslator();
+    let native = translator.translate('db.getSiblingDB(\'test\').getCollection(\'people\').find()');
+    let expected = 'function peopleFind(db) {\n' +
+      '  const useDb = db.db("test");\n' +
+      '  const query = {};\n' +
+      '  const returnData = new Promise(resolve => {\n' +
+      '    const arrayData = useDb\n' +
+      '      .collection("people")\n' +
+      '      .find(query)\n' +
+      '      .limit(20)\n' +
+      '      .toArray();\n' +
+      '    resolve(arrayData);\n' +
+      '  });\n' +
+      '  return returnData;\n' +
+      '}\n' +
+      'const results = peopleFind(db);\n' +
+      'results\n' +
+      '  .then(r => {\n' +
+      '    r.forEach(doc => {\n' +
+      '      console.log(JSON.stringify(doc));\n' +
+      '    });\n' +
+      '  })\n' +
+      '  .catch(err => console.error(err));\n';
+    assert.equal(escodegen.generate(esprima.parseScript(native)), escodegen.generate(esprima.parseScript(expected)));
+    translator = new MongoShellTranslator();
+    native = translator.translate('db.getSiblingDB(\'test\').getCollection(\'people\').findOne()');
+    expected = 'function peopleFindOne(db) {\n' +
+      '  const useDb = db.db("test");\n' +
+      '  const query = {};\n' +
+      '  const returnData = new Promise(resolve => {\n' +
+      '    const arrayData = useDb.collection("people").findOne(query);\n' +
+      '    resolve(arrayData);\n' +
+      '  });\n' +
+      '  return returnData;\n' +
+      '}\n' +
+      'const results = peopleFindOne(db);\n' +
+      'results\n' +
+      '  .then(r => {\n' +
+      '    console.log(JSON.stringify(r));\n' +
+      '  })\n' +
+      '  .catch(err => console.error(err));\n';
+    assert.equal(escodegen.generate(esprima.parseScript(native)), escodegen.generate(esprima.parseScript(expected)));
+  });
+
+  it('test find one and delete', () => {
+    let translator = new MongoShellTranslator();
+    let native = translator.translate('db.getSiblingDB(\'test\').getCollection(\'people\').findOneAndDelete({a:1})');
+    let expected = 'function peopleFindOneAndDelete(db, a) {\n' +
+      '    const useDb = db.db(\'test\');\n' +
+      '    const query = { a: a };\n' +
+      '        const returnData = new Promise(resolve => {\n' +
+      '                const arrayData = useDb.collection(\'people\').findOneAndDelete(query);\n' +
+      '                resolve(arrayData);\n' +
+      '    });\n' +
+      '    return (returnData);\n' +
+      '}\n' +
+      'const results = peopleFindOneAndDelete(db, 1);\n' +
+      'results.then(r => {\n' +
+      '    console.log(JSON.stringify(r));\n' +
+      '}).catch(err => console.error(err));';
+    assert.equal(escodegen.generate(esprima.parseScript(native)), escodegen.generate(esprima.parseScript(expected)));
+  });
 });
