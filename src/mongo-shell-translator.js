@@ -181,9 +181,6 @@ class MongoShellTranslator {
         translator = new aggregateTranslator.AggregateTranslator();
         break;
       case commandName.findOne:
-      case commandName.findOneAndDelete:
-      case commandName.findOneAndReplace:
-      case commandName.findOneAndUpdate:
         translator = new findOneTranslator.FindOneTranslator();
         break;
       case commandName.find:
