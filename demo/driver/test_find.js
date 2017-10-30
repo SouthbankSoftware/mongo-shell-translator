@@ -2,6 +2,7 @@ const MongoClient = require('mongodb').MongoClient;
 const esprima = require('esprima');
 const estraverse = require('estraverse');
 const escodegen = require('escodegen');
+const babel = require('babel-core');
 
 const url = 'mongodb://localhost:27017/test';
 
@@ -138,7 +139,22 @@ function testUpdateOne(db, name, nameUpdated, options) {
   });
   return (returnData);
 }
+const str1 = 'let ret = await db.db("SampleCollections").collection("test").find() \n console.log(ret)\n';
+
+const str2 = "\
+const testFun = async (db) => {\
+  let ret = await db.db('SampleCollections').collection('test').find();\
+  console.log(ret);\
+};\
+testFun(db);\
+";
+console.log(babel.transform(str2, { presets: ['stage-0'] }).code);
+
+const testFun = async(db) => {
+  let ret = await db.db('SampleCollections').collection('test').find();
+  console.log(ret);
+};
 
 MongoClient.connect(url, {}, async(err, db) => {
-  db.db('test').dropCollection('test111');
+  eval(babel.transform(str2, { presets: ['stage-0'] }).code);
 });
