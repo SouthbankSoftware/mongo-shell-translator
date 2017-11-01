@@ -71,4 +71,15 @@ describe('test aggregate translator', () => {
     assert.equal(escodegen.generate(functionStatement.body.body[2].body[0].declarations[0].init.arguments[0].body.body[0]),
       'const arrayData = useDb.collection(\'enron_messages\').aggregate(query);');
   });
+
+  it('test empty argument aggregate command', () => {
+    const aggregateTranslator = new AggregateTranslator();
+    const command = 'db.getSiblingDB("SampleCollections").crunchbase_database.aggregate()';
+    const ast = esprima.parseScript(command);
+    const { params, name, expression } = findSupportedStatement(ast.body[0]);
+    assert.equal('aggregate', name);
+    const { functionStatement, functionName, callStatement } = aggregateTranslator.createParameterizedFunction(ast.body[0], expression, params, new Context(), name);
+    assert.equal(callStatement.body.length, 2);
+    assert.equal(functionName, 'crunchbase_databaseAggregate');
+  });
 });

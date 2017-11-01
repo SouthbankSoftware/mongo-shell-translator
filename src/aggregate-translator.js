@@ -29,7 +29,10 @@ class AggregateTranslator extends commonTranslator.CommonTranslator {
     const db = this.findDbName(statement);
     const collection = this.findCollectionName(statement);
     const functionParams = [{ type: esprima.Syntax.Identifier, name: 'db' }];
-    const { matchParam, restParams } = getPipelineByName(expression.arguments, '$match');
+    let { matchParam, restParams } = getPipelineByName(expression.arguments, '$match');
+    if (!restParams) {
+      restParams = [];
+    }
     const limitParam = getPipelineByName(expression.arguments, '$limit').matchParam;
     const driverFunctionName = originFunName;
     let functionName = `${collection}${parameterParser.capitalizeFirst(driverFunctionName)}`;
@@ -40,7 +43,7 @@ class AggregateTranslator extends commonTranslator.CommonTranslator {
     if (expression.arguments.length > 1) {
       extraParam = escodegen.generate(expression.arguments[1]);
     }
-    if (limitParam.length === 0) {
+    if (!limitParam || limitParam.length === 0) {
       const lp = {
         type: esprima.Syntax.ObjectExpression,
         properties: [{
@@ -56,7 +59,7 @@ class AggregateTranslator extends commonTranslator.CommonTranslator {
       };
       restParams.push(lp);
     }
-    if (matchParam.length > 0) {
+    if (matchParam && matchParam.length > 0) {
       const pNum = parameterParser.getParameterNumber(matchParam[0]);
       let restPipeline = '';
       restParams.forEach((a) => {
@@ -85,7 +88,7 @@ class AggregateTranslator extends commonTranslator.CommonTranslator {
       }
     } else {
       let restPipeline = '';
-      restParams.forEach((a) => {
+      restParams && restParams.forEach((a) => {
         restPipeline += `${escodegen.generate(a)},`;
       });
       queryCmd = `const query = [${restPipeline}]`;
