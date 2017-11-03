@@ -4,7 +4,7 @@ const estraverse = require('estraverse');
 const escodegen = require('escodegen');
 const babel = require('babel-core');
 
-const url = 'mongodb://dbenvy:DBEnvy2016@ec2-13-54-17-227.ap-southeast-2.compute.amazonaws.com/admin';
+const url = 'mongodb://test:test@localhost:28017/admin';
 
 const aggregateTest = (db) => {
   // db.collection('explains').aggregate([], { explain: false, allowDiskUse: true, maxTimeMS: 100, bypassDocumentValidation: true }).toArray((err, docs) => {
@@ -156,11 +156,7 @@ const testFun = async(db) => {
 };
 
 MongoClient.connect(url, {}, async(err, db) => {
-  db.getRoles({
-    rolesInfo: 1,
-    showPrivileges: true,
-    showBuiltinRoles: true,
-  })
+  db.db('admin').command({ rolesInfo: 1, showBuiltinRoles: true })
     .then((roleList) => {
       console.log('role list', roleList);
     })
