@@ -120,7 +120,7 @@ class MongoShellTranslator {
       // declare all functions first
       exps.forEach((exp) => {
         if (!exp.depFun) {
-          statements.push(exp.function);
+          statements.push({ statement: exp.function, comments: exp.comments });
         }
       });
       // chain the promise calls
@@ -156,14 +156,14 @@ class MongoShellTranslator {
       const catchExp = this.createStatementAfterPromise('catch', promiseStatement.body[0].expression, 'err');
       promiseStatement.body[0].expression = catchExp;
       catchExp.arguments[0].body.body.push(esprima.parseScript('console.error(err)').body[0]);
-      statements.push(promiseStatement);
+      statements.push({ statement: promiseStatement, comments: `// ${getSeparator()}// Print selected documents to console ${getSeparator()}//` });
     } else {
       this.translatedStatements.forEach((statement) => {
         if (statement.type === esprima.Syntax.FunctionExpression) {
-          statements.push(statement.function);
-          statements.push(statement.call);
+          statements.push({ statement: statement.function, comments: statement.comments });
+          statements.push({ statement: statement.call, comments: statement.callComments });
         } else {
-          statements.push(statement.value);
+          statements.push({ statement: statement.value, comments: statement.comments });
         }
       });
     }
@@ -220,6 +220,7 @@ class MongoShellTranslator {
     const exps = _.filter(this.translatedStatements, { type: esprima.Syntax.FunctionExpression });
     const existedFunName = [];
     const allFunNames = {};
+    // update function name to be identical
     exps.forEach((exp) => {
       if (!exp.depFun) {
         if (existedFunName.indexOf(exp.functionName) >= 0) {
@@ -239,10 +240,42 @@ class MongoShellTranslator {
       }
     });
     const statements = this.createPromiseChain();
-    statements.forEach((s) => {
+    const codeArray = statements.map((s) => {
       newAst.body.push(s);
+      let comment = s.comments ? s.comments : '';
+      const generatedCode = generate({ type: 'Program', body: [s.statement] });
+      return `${comment}${getSeparator()}${generatedCode}`;
     });
-    return generate(newAst);
+    return codeArray.join(getSeparator());
+  }
+
+  createComments(name, dbName, functionName) {
+    switch (name) {
+      case commandName.find:
+      case commandName.findOne:
+      case commandName.aggregate:
+        return `// ${getSeparator()}// Function to return selected ${functionName.substring(0, functionName.indexOf('Find'))} ${getSeparator()}//`;
+      case commandName.insert:
+      case commandName.insertMany:
+      case commandName.insertOne:
+        return `// ${getSeparator()}// Function to insert into ${functionName.substring(0, functionName.indexOf('Insert'))} ${getSeparator()}//`;
+      case commandName.deleteMany:
+      case commandName.deleteOne:
+        return `// ${getSeparator()}// Function to return selected ${functionName.substring(0, functionName.indexOf('Delete'))} ${getSeparator()}//`;
+      case commandName.dropDatabase:
+        return `// ${getSeparator()}// Drop database ${dbName} ${getSeparator()}//`;
+      case commandName.drop:
+        return `// ${getSeparator()}// Drop collection${getSeparator()}//`;
+      case commandName.dropIndex:
+      case commandName.dropIndexes:
+        return `// ${getSeparator()}// Drop index on database ${dbName} ${getSeparator()}//`;
+      case commandName.update:
+      case commandName.updateMany:
+      case commandName.updateOne:
+        return `// ${getSeparator()}// Update on selected ${functionName.substring(0, functionName.indexOf('Update'))} ${getSeparator()}//`;
+      default:
+        return '';
+    }
   }
 
   translate(shell) {
@@ -285,6 +318,8 @@ class MongoShellTranslator {
                 call: callStatement,
                 functionName,
                 variableName: variable,
+                comments: this.createComments(name, dbName, functionName),
+                callComments: `// ${getSeparator()}// Print selected documents to console ${getSeparator()}//`,
               });
             } else {
               this.addStatement({ ...translator.createParameterizedFunction(statement, expression, params, context, name, variable).expression, variableName: variable });

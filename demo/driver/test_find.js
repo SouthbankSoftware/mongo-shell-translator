@@ -4,7 +4,7 @@ const estraverse = require('estraverse');
 const escodegen = require('escodegen');
 const babel = require('babel-core');
 
-const url = 'mongodb://localhost:27017/test';
+const url = 'mongodb://dbenvy:DBEnvy2016@ec2-13-54-17-227.ap-southeast-2.compute.amazonaws.com/admin';
 
 const aggregateTest = (db) => {
   // db.collection('explains').aggregate([], { explain: false, allowDiskUse: true, maxTimeMS: 100, bypassDocumentValidation: true }).toArray((err, docs) => {
@@ -148,7 +148,7 @@ const testFun = async (db) => {\
 };\
 testFun(db);\
 ";
-console.log(babel.transform(str2, { presets: ['stage-0'] }).code);
+// console.log(babel.transform(str2, { presets: ['stage-0'] }).code);
 
 const testFun = async(db) => {
   let ret = await db.db('SampleCollections').collection('test').find();
@@ -156,5 +156,15 @@ const testFun = async(db) => {
 };
 
 MongoClient.connect(url, {}, async(err, db) => {
-  eval(babel.transform(str2, { presets: ['stage-0'] }).code);
+  db.getRoles({
+    rolesInfo: 1,
+    showPrivileges: true,
+    showBuiltinRoles: true,
+  })
+    .then((roleList) => {
+      console.log('role list', roleList);
+    })
+    .catch((err) => {
+      console.error(err);
+    });
 });
